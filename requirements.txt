@@ -1,0 +1,31 @@
+# Web framework
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+
+# Database
+sqlalchemy==2.0.30
+psycopg[binary]==3.2.9
+
+# Config & validation
+pydantic==2.7.4
+pydantic-settings==2.3.4
+
+# LLM providers (install both; active one selected via LLM_PROVIDER env var)
+anthropic==0.28.0
+openai==1.35.3
+
+# ML / data
+scikit-learn==1.5.0
+numpy==1.26.4
+pandas==2.2.2
+joblib==1.4.2
+
+# HTTP (for seed script)
+httpx==0.27.0
+
+# Forms / multipart
+python-multipart==0.0.9
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7

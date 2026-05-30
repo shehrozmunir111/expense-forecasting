@@ -1,0 +1,50 @@
+services:
+  # -- API (SQLite, zero-dependency MVP) ---------------------------- #
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data          # persists SQLite DB + trained model
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+
+  # -- Optional: PostgreSQL for production (run with --profile pg) -- #
+  db:
+    image: postgres:16-alpine
+    profiles: ["pg"]
+    environment:
+      POSTGRES_USER: expense
+      POSTGRES_PASSWORD: expense
+      POSTGRES_DB: expense_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expense"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api_pg:
+    build: .
+    profiles: ["pg"]
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://expense:expense@db:5432/expense_db
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:
