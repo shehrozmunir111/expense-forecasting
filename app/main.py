@@ -39,7 +39,6 @@ app = FastAPI(
     description=(
         "AI-powered personal expense categorization (LLM) "
         "and next-month forecasting (ML). "
-        "Phase 1: data ingestion - Phase 2: AI categorization - Phase 3: ML forecasting."
     ),
     lifespan=lifespan,
     docs_url="/docs",
