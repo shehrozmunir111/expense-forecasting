@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import health, expenses, forecast
+from app.routers import health, expenses, forecast, chat
 from app.services.forecasting import forecasting_service
 
 logging.basicConfig(
@@ -57,6 +57,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(expenses.router)
 app.include_router(forecast.router)
+app.include_router(chat.router)
 
 
 # -- Global error handler ----------------------------------------------- #

@@ -13,6 +13,7 @@ The project is designed for a simple local-first workflow: SQLite by default, op
 - Category and monthly summaries
 - Per-category next-month forecasts
 - Forecast model persistence and startup reload
+- Conversational "Chat with your finances" — Adaptive RAG + memory over your own data
 - SQLite by default, PostgreSQL-ready configuration
 - Docker and Docker Compose support
 - Test suite covering API, repository, service, and ML behavior
@@ -26,6 +27,7 @@ The project is designed for a simple local-first workflow: SQLite by default, op
 | Validation | Pydantic v2, pydantic-settings |
 | LLM providers | Anthropic or OpenAI |
 | ML | pandas, scikit-learn, joblib |
+| Conversational AI | LangGraph, LangChain (LCEL), Chroma; LM Studio or cloud LLM |
 | Tests | pytest, FastAPI TestClient |
 
 ## Project Structure
@@ -36,18 +38,27 @@ app/
 |-- config.py                 # Environment-based settings
 |-- database.py               # SQLAlchemy engine and session factory
 |-- models/expense.py         # Expense and forecast cache ORM models
-|-- schemas/                  # Pydantic request/response schemas
+|-- schemas/                  # Pydantic request/response schemas (incl. chat.py)
 |-- repositories/             # Database access layer
 |-- services/
 |   |-- categorization.py     # LLM categorization service
-|   `-- forecasting.py        # Forecasting orchestration service
+|   |-- forecasting.py        # Forecasting orchestration service
+|   |-- finance_tools.py      # Deterministic accessors used by the chat agent
+|   |-- finance_retriever.py  # Chroma retrieval over service "fact cards"
+|   |-- llm_provider.py       # Chat model + embeddings factory (LM Studio / cloud)
+|   `-- chat_agent.py         # LangGraph Adaptive-RAG agent with memory
 |-- ml/forecaster.py          # Train, predict, persist, and reload ML models
-`-- routers/                  # Health, expenses, and forecast routes
+`-- routers/                  # Health, expenses, forecast, and chat routes
 
 tests/
 |-- conftest.py
 |-- test_expenses.py
-`-- test_forecast.py
+|-- test_forecast.py
+`-- test_chat.py
+
+scripts/
+|-- seed_data.py              # Seed synthetic transactions via the API
+`-- verify_chat.py            # Live multi-turn chat verification (memory + numbers)
 ```
 
 ## Requirements
@@ -161,6 +172,8 @@ DATABASE_URL=postgresql+psycopg://expense:expense@localhost:5432/expense_db
 | `GET` | `/forecast/` | Generate next-month forecast |
 | `POST` | `/forecast/train` | Retrain forecasting model |
 | `GET` | `/forecast/model-info` | Forecast model readiness and metadata |
+| `POST` | `/chat` | Ask plain-language questions about your finances (Adaptive RAG + memory) |
+| `POST` | `/chat/stream` | Same, streamed token-by-token (`text/plain`) |
 
 ## Example Workflow
 
@@ -217,6 +230,79 @@ The forecaster trains one model per category. It uses:
 
 Forecasting requires at least two distinct months of categorized expense data. Predictions are clamped to zero or above, saved to disk, and reloaded when the application starts.
 
+## Chat with your finances
+
+A conversational endpoint that answers plain-language questions about *your own* data, for example:
+
+- "How much did I spend on groceries in January 2024?"
+- "And what about the next month?" (follow-ups use conversation memory)
+- "Which category did I spend the most on overall?"
+- "What's next month's food forecast?"
+
+### How it works (Adaptive RAG + memory)
+
+The agent is a small LangGraph state machine:
+
+```text
+retrieve --> grade --> (rewrite --> retrieve)* --> answer
+```
+
+1. **retrieve** — builds short "fact cards" from the existing summary/forecast services and indexes them in a Chroma vector store, then retrieves the cards most relevant to the question.
+2. **grade** (LCEL) — judges whether the retrieved cards are relevant and sufficient.
+3. **rewrite** — if they are weak, the question is rewritten (resolving follow-ups using the conversation) and retrieval is retried.
+4. **answer** (LCEL: `prompt | llm | StrOutputParser`) — phrases a short, grounded answer.
+
+**Numbers are never computed by the LLM.** Every figure in an answer comes from the deterministic repository/forecast services — the same code behind `/expenses/summary/*` and `/forecast/` — so chat answers always match those endpoints. **Memory** is provided by a LangGraph checkpointer keyed by `conversation_id` (in-memory for SQLite/dev, PostgreSQL for the Postgres profile), so multi-turn follow-ups keep context. If the LLM is unreachable, the endpoint returns a templated summary of the retrieved facts instead of failing.
+
+### Endpoint
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "How much did I spend on groceries in January 2024?", "conversation_id": "user-42"}'
+```
+
+```json
+{
+  "answer": "You spent 800.00 UAH on groceries in January 2024.",
+  "sources": [
+    {
+      "kind": "category_summary",
+      "label": "Groceries 2024-01",
+      "detail": "In 2024-01, spending on Groceries was 800.00 UAH over 2 transactions (40.0% of that month)."
+    }
+  ],
+  "conversation_id": "user-42",
+  "rewritten": false,
+  "grounded": true
+}
+```
+
+Reuse the same `conversation_id` for follow-up questions. A token-by-token streaming variant is available at `POST /chat/stream` (`text/plain`; the resolved id is returned in the `X-Conversation-Id` response header).
+
+### LLM configuration
+
+The agent is provider-agnostic and configured via `.env`. By default it targets a local **LM Studio** server (OpenAI-compatible), so no cloud key is required:
+
+```env
+CHAT_LLM_PROVIDER=openai
+CHAT_LLM_MODEL=google/gemma-4-12b-qat
+LLM_BASE_URL=http://localhost:1234/v1
+OPENAI_API_KEY=lm-studio
+EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+EMBEDDING_BASE_URL=http://localhost:1234/v1
+```
+
+To use the cloud instead, set `CHAT_LLM_PROVIDER` to `openai` (real key, clear `LLM_BASE_URL`), `anthropic`, or `gemini` (`pip install langchain-google-genai`). See `.env.example` for all options. Optional LangSmith tracing is enabled by running the API with `uvicorn app.main:app --env-file .env`.
+
+### Verify it end-to-end
+
+With LM Studio running, this seeds deterministic data and runs a live 3-turn conversation, confirming that memory works and the numbers match the services:
+
+```powershell
+python scripts/verify_chat.py
+```
+
 ## Running Tests
 
 ```powershell
@@ -227,10 +313,10 @@ python -m pytest -q
 Current status:
 
 ```text
-32 passed
+47 passed
 ```
 
-The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling.
+The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling. The chat suite adds retrieval, relevance grading, the weak-grade rewrite path, grounded answering (LLM mocked), multi-turn memory, numeric correctness from the services, and LLM-down fallback — all fully offline (no LM Studio/network required).
 
 ## Notes for Development
 
