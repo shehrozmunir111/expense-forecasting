@@ -40,3 +40,12 @@ class ChatResponse(BaseModel):
     conversation_id: str
     rewritten: bool = Field(False, description="True if adaptive-RAG rewrote the query and retried")
     grounded: bool = Field(True, description="False when the LLM was unavailable and a templated fallback was used")
+    guardrails: Optional[dict] = Field(None, description="Input/output guard flags (when guardrails are enabled)")
+    status: str = Field("completed", description="completed | pending_approval (HITL) | blocked")
+    pending: Optional[dict] = Field(None, description="Proposed write action awaiting human approval (HITL)")
+    routed_to: Optional[str] = Field(None, description="Which specialist the supervisor routed the question to")
+
+
+class ApproveRequest(BaseModel):
+    conversation_id: str = Field(..., description="The conversation/thread awaiting approval")
+    approved: bool = Field(..., description="Approve (true) or reject (false) the pending action")

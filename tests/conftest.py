@@ -34,6 +34,8 @@ def client(db, tmp_path, monkeypatch):
     # Default HTTP tests to the ephemeral retriever (no on-disk Chroma writes);
     # the persistent-RAG test enables it explicitly with a tmp dir.
     monkeypatch.setattr("app.config.settings.RAG_PERSISTENT", False)
+    # Long-term memory also writes to disk; off by default in tests.
+    monkeypatch.setattr("app.config.settings.LONG_TERM_MEMORY", False)
     forecasting_service.forecaster = ExpenseForecaster()
 
     def _override():

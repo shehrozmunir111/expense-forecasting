@@ -8,11 +8,15 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.repositories.expense_repo import ExpenseRepository
-from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.chat import ApproveRequest, ChatRequest, ChatResponse
+from app.services.action_agent import action_agent
 from app.services.chat_agent import chat_agent
 from app.services.finance_agent import finance_react_agent
 from app.services.finance_tools import FinanceTools
+from app.services.guardrails import REFUSAL_MESSAGE, check_input, check_output
+from app.services.long_term_memory import long_term_memory
 from app.services.rag_index import RagIndexRetriever, rag_index
+from app.services.supervisor import supervisor
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["Chat"])
@@ -33,11 +37,42 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     Uses Adaptive RAG (retrieve -> grade -> rewrite -> answer) over fact cards
     built from the deterministic summary/forecast services, so every number
     matches the REST endpoints. Pass a stable `conversation_id` to keep
-    multi-turn context (the same id is returned for convenience).
+    multi-turn context (the same id is returned for convenience). Guardrails
+    validate the input and verify answer groundedness when enabled.
     """
     tools = FinanceTools(ExpenseRepository(db))
-    return chat_agent.run(payload.message, payload.conversation_id, tools,
-                          retriever=_build_retriever(tools))
+    cid = payload.conversation_id or uuid.uuid4().hex
+
+    input_flags = []
+    if settings.GUARDRAILS:
+        ig = check_input(payload.message)
+        if not ig.allowed:
+            return ChatResponse(
+                answer=REFUSAL_MESSAGE, sources=[], conversation_id=cid,
+                status="blocked", grounded=True,
+                guardrails={"input": ig.flags, "reason": ig.reason},
+            )
+        input_flags = ig.flags
+
+    extra_context = ""
+    if settings.LONG_TERM_MEMORY:
+        extra_context = long_term_memory.recall_text(cid, payload.message)
+
+    resp = chat_agent.run(payload.message, cid, tools, retriever=_build_retriever(tools),
+                          extra_context=extra_context)
+
+    if settings.LONG_TERM_MEMORY:
+        long_term_memory.add_turn(cid, payload.message, resp.answer)
+
+    if settings.GUARDRAILS:
+        context = "\n".join(s.detail for s in resp.sources)
+        og = check_output(resp.answer, context)
+        resp.guardrails = {
+            "input": input_flags,
+            "output": og.flags,
+            "grounded_verified": og.grounded,
+        }
+    return resp
 
 
 @router.post("/stream")
@@ -79,6 +114,36 @@ def chat_agent_stream(payload: ChatRequest, db: Session = Depends(get_db)):
         media_type="text/plain",
         headers={"X-Conversation-Id": cid},
     )
+
+
+@router.post("/supervisor", response_model=ChatResponse)
+def chat_supervisor(payload: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Multi-agent entry point: routes the request to the right specialist
+    (question-answering vs. data-modifying) and reports `routed_to`. A request
+    routed to the action agent may return `status=pending_approval`.
+    """
+    tools = FinanceTools(ExpenseRepository(db))
+    return supervisor.run(payload.message, payload.conversation_id, tools,
+                          retriever=_build_retriever(tools))
+
+
+@router.post("/action", response_model=ChatResponse)
+def chat_action(payload: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Human-in-the-Loop write agent. The LLM may propose a data change
+    (recategorize/delete); the response then has `status=pending_approval` and a
+    `pending` action. Approve it via POST /chat/approve.
+    """
+    tools = FinanceTools(ExpenseRepository(db))
+    return action_agent.run(payload.message, payload.conversation_id, tools)
+
+
+@router.post("/approve", response_model=ChatResponse)
+def chat_approve(payload: ApproveRequest, db: Session = Depends(get_db)):
+    """Approve (or reject) the pending action for a conversation (resumes the agent)."""
+    tools = FinanceTools(ExpenseRepository(db))
+    return action_agent.approve(payload.conversation_id, payload.approved, tools)
 
 
 @router.post("/reindex")

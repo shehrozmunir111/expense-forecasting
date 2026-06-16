@@ -17,6 +17,11 @@ The project is designed for a simple local-first workflow: SQLite by default, op
 - Tool-calling (ReAct) agent variant — the LLM picks deterministic finance tools
 - Production-grade RAG — persistent Chroma index with fingerprint-based refresh
 - AI evaluation harness — groundedness, retrieval recall, and LLM-as-judge metrics
+- Human-in-the-Loop (HITL) — data-changing actions pause for explicit approval
+- Multi-agent supervisor — routes each request to the right specialist (QA vs. action)
+- Reranking — re-orders retrieved candidates before answering (lexical or LLM)
+- Long-term semantic memory — recalls relevant facts across sessions
+- Guardrails — input validation (injection/topic) + answer-groundedness checks
 - SQLite by default, PostgreSQL-ready configuration
 - Docker and Docker Compose support
 - Test suite covering API, repository, service, and ML behavior
@@ -51,7 +56,12 @@ app/
 |   |-- rag_index.py          # Persistent (production) RAG index + fingerprint refresh
 |   |-- llm_provider.py       # Chat model + embeddings factory (LM Studio / cloud)
 |   |-- chat_agent.py         # LangGraph Adaptive-RAG agent with memory
-|   `-- finance_agent.py      # Tool-calling (ReAct) agent with memory
+|   |-- finance_agent.py      # Tool-calling (ReAct) agent with memory
+|   |-- action_agent.py       # HITL write agent (interrupt -> approve/reject)
+|   |-- supervisor.py         # Multi-agent router / handoff
+|   |-- reranker.py           # Lexical / LLM reranking of retrieved candidates
+|   |-- long_term_memory.py   # Per-user persistent semantic memory
+|   `-- guardrails.py         # Input/output validation
 |-- eval/                     # AI evaluation: dataset + evaluators
 |-- ml/forecaster.py          # Train, predict, persist, and reload ML models
 `-- routers/                  # Health, expenses, forecast, and chat routes
@@ -63,7 +73,12 @@ tests/
 |-- test_chat.py              # Adaptive-RAG agent
 |-- test_agent.py             # Tool-calling agent
 |-- test_rag.py               # Persistent RAG index
-`-- test_eval.py              # Evaluation harness
+|-- test_eval.py              # Evaluation harness
+|-- test_guardrails.py        # Input/output guardrails
+|-- test_reranker.py          # Reranking
+|-- test_memory.py            # Long-term memory
+|-- test_hitl.py              # Human-in-the-Loop action agent
+`-- test_supervisor.py        # Multi-agent routing
 
 scripts/
 |-- seed_data.py              # Seed synthetic transactions via the API
@@ -187,6 +202,9 @@ DATABASE_URL=postgresql+psycopg://expense:expense@localhost:5432/expense_db
 | `POST` | `/chat/agent` | Tool-calling (ReAct) variant — the LLM picks finance tools |
 | `POST` | `/chat/agent/stream` | Tool-calling variant, streamed (`text/plain`) |
 | `POST` | `/chat/reindex` | Rebuild the persistent RAG index (`?force=true|false`) |
+| `POST` | `/chat/supervisor` | Multi-agent router → QA or action specialist (`routed_to`) |
+| `POST` | `/chat/action` | HITL write agent; may return `status=pending_approval` |
+| `POST` | `/chat/approve` | Approve/reject the pending action for a conversation |
 
 ## Example Workflow
 
@@ -365,6 +383,45 @@ python scripts/evaluate.py --langsmith  # also upload the dataset to LangSmith
 
 It prints per-question PASS/FAIL/HIT marks plus aggregate rates (`groundedness_numeric`, `retrieval_recall`, and `judge_*`). The deterministic evaluators run fully offline; the judge uses the configured LLM.
 
+## Advanced agent features
+
+Five further capabilities, all toggleable via settings and verified live + in Docker.
+
+### Human-in-the-Loop (HITL)
+
+`POST /chat/action` is a write agent: the LLM may propose a **data change** (recategorize or delete an expense). Each write tool calls LangGraph's `interrupt()` *before* doing anything, so the graph pauses and the response carries `status=pending_approval` plus the proposed `pending` action. The change is applied only after approval:
+
+```bash
+# 1) Propose
+curl -X POST http://localhost:8000/chat/action \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Recategorize expense 1 to Subscription", "conversation_id": "u-1"}'
+# -> {"status":"pending_approval","pending":{"action":"update_category","expense_id":1,...}}
+
+# 2) Approve (resumes the paused graph and performs the write)
+curl -X POST http://localhost:8000/chat/approve \
+  -H "Content-Type: application/json" \
+  -d '{"conversation_id": "u-1", "approved": true}'
+```
+
+Rejecting (`approved=false`) cancels without changing anything. The write executes against the approving request's DB session.
+
+### Multi-agent supervisor
+
+`POST /chat/supervisor` classifies the request (LLM with a keyword fallback) and **hands off** to the right specialist — the Adaptive-RAG agent for questions, or the HITL action agent for modifications. The chosen route is returned as `routed_to`. An action route can itself return `pending_approval`.
+
+### Reranking
+
+When `RAG_RERANK=true`, retrieval fetches `RAG_FETCH_K` candidates and reranks them down to `CHAT_RETRIEVAL_K`. Default is a deterministic, offline lexical (BM25-lite) reranker; set `RAG_RERANK_LLM=true` to score candidates with the LLM instead.
+
+### Long-term semantic memory
+
+When `LONG_TERM_MEMORY=true`, salient turns are embedded into a per-user persistent Chroma collection (`LTM_PERSIST_DIR`). On each question, relevant past memories are recalled and injected into the answer context — surviving restarts (unlike the in-process conversation checkpointer).
+
+### Guardrails
+
+When `GUARDRAILS=true`, an **input guard** blocks prompt-injection attempts and oversized input (and soft-flags off-topic questions), and an **output guard** verifies *groundedness* — every amount in the answer must appear in the retrieved context, else it is flagged. Flags are returned under `guardrails` on the response; blocked input returns `status=blocked`. This is a small, transparent layer (not a heavy external framework) behind a `check_input`/`check_output` interface.
+
 ## Running Tests
 
 ```powershell
@@ -375,10 +432,10 @@ python -m pytest -q
 Current status:
 
 ```text
-70 passed
+102 passed
 ```
 
-The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling. The AI suites add: Adaptive RAG (retrieve / grade / rewrite / answer / multi-turn memory / numeric correctness / fallback), the tool-calling agent (tool selection, memory, fallback), the persistent RAG index (build, fingerprint caching, rebuild-on-change, dedup, recall, `/chat/reindex`), and the evaluation harness (numeric groundedness, retrieval recall, LLM-as-judge) — all fully offline (LLM mocked, no LM Studio/network required).
+The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling. The AI suites add: Adaptive RAG (retrieve / grade / rewrite / answer / multi-turn memory / numeric correctness / fallback), the tool-calling agent (tool selection, memory, fallback), the persistent RAG index (build, fingerprint caching, rebuild-on-change, dedup, recall, `/chat/reindex`), the evaluation harness (numeric groundedness, retrieval recall, LLM-as-judge), guardrails (injection/topic/groundedness), reranking (lexical + LLM), long-term memory (recall, user-scoping, persistence), Human-in-the-Loop (interrupt → approve/reject), and the multi-agent supervisor (routing + handoff) — all fully offline (LLM mocked, no LM Studio/network required).
 
 ## Notes for Development
 

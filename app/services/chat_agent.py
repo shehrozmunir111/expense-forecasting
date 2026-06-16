@@ -86,6 +86,7 @@ class ChatState(TypedDict):
     rewritten: bool
     grounded: bool
     answer: str
+    extra_context: str       # injected long-term-memory recall, if any
 
 
 def _doc_to_source(d) -> dict:
@@ -125,13 +126,14 @@ class ChatAgent:
         llm=None,
         retriever: Optional[FinanceRetriever] = None,
         embeddings=None,
+        extra_context: str = "",
     ) -> ChatResponse:
         cid = conversation_id or uuid.uuid4().hex
         llm = llm if llm is not None else _safe_chat_model()
         retriever = retriever or FinanceRetriever(tools, embeddings=embeddings)
         graph = self._build_graph(retriever, llm)
         try:
-            state = graph.invoke(self._initial_state(message), self._config(cid))
+            state = graph.invoke(self._initial_state(message, extra_context), self._config(cid))
         finally:
             retriever.close()
 
@@ -151,6 +153,7 @@ class ChatAgent:
         llm=None,
         retriever: Optional[FinanceRetriever] = None,
         embeddings=None,
+        extra_context: str = "",
     ):
         """Yield answer tokens as they are generated (memory still persists).
 
@@ -167,7 +170,8 @@ class ChatAgent:
                 # when captured by stream_mode="messages"; suppress just here.
                 warnings.simplefilter("ignore")
                 for chunk, meta in graph.stream(
-                    self._initial_state(message), self._config(cid), stream_mode="messages"
+                    self._initial_state(message, extra_context), self._config(cid),
+                    stream_mode="messages",
                 ):
                     # Yield only incremental answer tokens (AIMessageChunk), not the
                     # full AIMessage the node writes to the messages channel.
@@ -196,7 +200,7 @@ class ChatAgent:
         return {"configurable": {"thread_id": cid}}
 
     @staticmethod
-    def _initial_state(message: str) -> dict:
+    def _initial_state(message: str, extra_context: str = "") -> dict:
         # Per-turn fields are reset here; `messages` is appended via the reducer.
         return {
             "messages": [HumanMessage(content=message)],
@@ -208,6 +212,7 @@ class ChatAgent:
             "rewritten": False,
             "grounded": True,
             "answer": "",
+            "extra_context": extra_context,
         }
 
     def _build_graph(self, retriever: FinanceRetriever, llm):
@@ -305,6 +310,9 @@ class ChatAgent:
         def answer(state: ChatState) -> dict:
             docs = state["documents"]
             ctx = _format_context(docs)
+            extra = state.get("extra_context") or ""
+            if extra:
+                ctx = f"{extra}\n\n{ctx}"
             if llm is not None:
                 prompt = ChatPromptTemplate.from_messages(
                     [("system", _ANSWER_SYSTEM),

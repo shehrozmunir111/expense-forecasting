@@ -146,7 +146,13 @@ class FinanceRetriever:
         if not self._docs:
             return []
         store = self._ensure_store()
-        return store.similarity_search(query, k=k or self.k)
+        k = k or self.k
+        if settings.RAG_RERANK:
+            from app.services.reranker import rerank
+
+            candidates = store.similarity_search(query, k=max(k, settings.RAG_FETCH_K))
+            return rerank(query, candidates, k)
+        return store.similarity_search(query, k=k)
 
     def close(self) -> None:
         """Drop the ephemeral collection so per-request memory is reclaimed."""

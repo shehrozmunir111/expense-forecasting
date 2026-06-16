@@ -153,7 +153,13 @@ class RagIndex:
     def retrieve(self, query: str, k: Optional[int] = None) -> List[Document]:
         if self._count() == 0:
             return []
-        return self._get_store().similarity_search(query, k=k or settings.CHAT_RETRIEVAL_K)
+        k = k or settings.CHAT_RETRIEVAL_K
+        if settings.RAG_RERANK:
+            from app.services.reranker import rerank
+
+            candidates = self._get_store().similarity_search(query, k=max(k, settings.RAG_FETCH_K))
+            return rerank(query, candidates, k)
+        return self._get_store().similarity_search(query, k=k)
 
 
 class RagIndexRetriever:

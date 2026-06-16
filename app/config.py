@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     LLM_BASE_URL: Optional[str] = None  # e.g. http://localhost:1234/v1 (LM Studio); None = cloud default
     CHAT_LLM_TEMPERATURE: float = 0.0
     CHAT_MAX_TOKENS: int = 512
+    CHAT_LLM_TIMEOUT: int = 60  # seconds per LLM call; raise for slow local models
     GEMINI_API_KEY: Optional[str] = None
 
     # Embeddings for retrieval (Chroma)
@@ -50,6 +51,20 @@ class Settings(BaseSettings):
     RAG_PERSISTENT: bool = True
     RAG_PERSIST_DIR: str = "./data/chroma"
     RAG_COLLECTION: str = "finance_facts"
+
+    # Reranking: fetch more candidates, then rerank down to CHAT_RETRIEVAL_K.
+    RAG_RERANK: bool = True
+    RAG_FETCH_K: int = 12          # candidates pulled before reranking
+    RAG_RERANK_LLM: bool = False   # True = LLM reranker; False = deterministic lexical
+
+    # Guardrails (input/output validation).
+    GUARDRAILS: bool = True
+
+    # Long-term / semantic memory (per-user persistent recall across sessions).
+    LONG_TERM_MEMORY: bool = True
+    LTM_PERSIST_DIR: str = "./data/chroma_memory"
+    LTM_COLLECTION: str = "user_memory"
+    LTM_RECALL_K: int = 3
 
     # "extra: ignore" lets the shared .env hold unrelated keys
     # (LANGSMITH_*, TAVILY_API_KEY, PINECONE_API_KEY, ...) without breaking startup.

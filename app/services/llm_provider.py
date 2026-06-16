@@ -36,7 +36,7 @@ def get_chat_model(streaming: bool = False):
             api_key=settings.OPENAI_API_KEY or "lm-studio",
             temperature=settings.CHAT_LLM_TEMPERATURE,
             max_tokens=settings.CHAT_MAX_TOKENS,
-            timeout=60,
+            timeout=settings.CHAT_LLM_TIMEOUT,
             max_retries=1,
             streaming=streaming,
         )
@@ -51,7 +51,7 @@ def get_chat_model(streaming: bool = False):
             api_key=settings.ANTHROPIC_API_KEY,
             temperature=settings.CHAT_LLM_TEMPERATURE,
             max_tokens=settings.CHAT_MAX_TOKENS,
-            timeout=60,
+            timeout=settings.CHAT_LLM_TIMEOUT,
             streaming=streaming,
         )
 
