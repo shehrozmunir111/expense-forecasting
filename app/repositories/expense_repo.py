@@ -217,6 +217,22 @@ class ExpenseRepository:
             "categories": categories,
         }
 
+    def dataset_signature(self) -> dict:
+        """Cheap fingerprint of expense-table state for RAG index caching.
+
+        Portable across SQLite/PostgreSQL (plain aggregates).
+        """
+        count = self.db.query(func.count(Expense.id)).scalar() or 0
+        max_id = self.db.query(func.max(Expense.id)).scalar() or 0
+        max_updated = self.db.query(func.max(Expense.updated_at)).scalar()
+        max_created = self.db.query(func.max(Expense.created_at)).scalar()
+        return {
+            "count": int(count),
+            "max_id": int(max_id),
+            "max_updated": str(max_updated),
+            "max_created": str(max_created),
+        }
+
     def get_distinct_months(self) -> List[str]:
         rows = (
             self.db.query(Expense.date)

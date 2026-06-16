@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     CHAT_MAX_REWRITES: int = 1  # how many query-rewrite retries before answering anyway
     CHAT_RECENT_TX_LIMIT: int = 8
 
+    # Production RAG: persistent Chroma index with fingerprint-based refresh.
+    # When False, /chat uses an ephemeral per-request index instead.
+    RAG_PERSISTENT: bool = True
+    RAG_PERSIST_DIR: str = "./data/chroma"
+    RAG_COLLECTION: str = "finance_facts"
+
     # "extra: ignore" lets the shared .env hold unrelated keys
     # (LANGSMITH_*, TAVILY_API_KEY, PINECONE_API_KEY, ...) without breaking startup.
     model_config = {"env_file": ".env", "case_sensitive": True, "extra": "ignore"}

@@ -1,0 +1,38 @@
+[
+  {
+    "question": "How much did I spend on groceries in January 2024?",
+    "expected_category": "Groceries",
+    "expected_month": "2024-01",
+    "expected_number": 800.0
+  },
+  {
+    "question": "What was my total grocery spending in February 2024?",
+    "expected_category": "Groceries",
+    "expected_month": "2024-02",
+    "expected_number": 700.0
+  },
+  {
+    "question": "How much went to Car/Fuel in March 2024?",
+    "expected_category": "Car/Fuel",
+    "expected_month": "2024-03",
+    "expected_number": 1300.0
+  },
+  {
+    "question": "How much did I spend on dining in February 2024?",
+    "expected_category": "Dining",
+    "expected_month": "2024-02",
+    "expected_number": 250.0
+  },
+  {
+    "question": "Which category did I spend the most on overall?",
+    "expected_category": "Car/Fuel",
+    "expected_month": null,
+    "expected_number": 3600.0
+  },
+  {
+    "question": "What were my total expenses in January 2024?",
+    "expected_category": null,
+    "expected_month": "2024-01",
+    "expected_number": 2200.0
+  }
+]

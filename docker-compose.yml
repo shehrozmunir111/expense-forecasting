@@ -5,10 +5,18 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data          # persists SQLite DB + trained model
+      - ./data:/app/data          # persists SQLite DB + trained model + Chroma index
     env_file:
       - path: .env
         required: false
+    environment:
+      # Inside the container "localhost" is the container; reach the host's
+      # LM Studio via host.docker.internal (overrides the .env localhost URLs).
+      LLM_BASE_URL: http://host.docker.internal:1234/v1
+      EMBEDDING_BASE_URL: http://host.docker.internal:1234/v1
+      LANGSMITH_TRACING: "false"   # keep the container self-contained
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   # -- Optional: PostgreSQL for production (run with --profile pg) -- #
@@ -41,6 +49,11 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql+psycopg://expense:expense@db:5432/expense_db
+      LLM_BASE_URL: http://host.docker.internal:1234/v1
+      EMBEDDING_BASE_URL: http://host.docker.internal:1234/v1
+      LANGSMITH_TRACING: "false"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy

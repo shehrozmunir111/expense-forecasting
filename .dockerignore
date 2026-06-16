@@ -1,0 +1,16 @@
+# Keep the build context lean and secrets out of the image.
+.venv/
+.git/
+.github/
+data/
+*.db
+*.joblib
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+*.egg-info/
+dist/
+.vscode/
+.idea/
+_UPGRADE_PROMPT.md

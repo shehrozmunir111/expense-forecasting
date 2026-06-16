@@ -14,6 +14,9 @@ The project is designed for a simple local-first workflow: SQLite by default, op
 - Per-category next-month forecasts
 - Forecast model persistence and startup reload
 - Conversational "Chat with your finances" — Adaptive RAG + memory over your own data
+- Tool-calling (ReAct) agent variant — the LLM picks deterministic finance tools
+- Production-grade RAG — persistent Chroma index with fingerprint-based refresh
+- AI evaluation harness — groundedness, retrieval recall, and LLM-as-judge metrics
 - SQLite by default, PostgreSQL-ready configuration
 - Docker and Docker Compose support
 - Test suite covering API, repository, service, and ML behavior
@@ -44,9 +47,12 @@ app/
 |   |-- categorization.py     # LLM categorization service
 |   |-- forecasting.py        # Forecasting orchestration service
 |   |-- finance_tools.py      # Deterministic accessors used by the chat agent
-|   |-- finance_retriever.py  # Chroma retrieval over service "fact cards"
+|   |-- finance_retriever.py  # Ephemeral Chroma retrieval over service "fact cards"
+|   |-- rag_index.py          # Persistent (production) RAG index + fingerprint refresh
 |   |-- llm_provider.py       # Chat model + embeddings factory (LM Studio / cloud)
-|   `-- chat_agent.py         # LangGraph Adaptive-RAG agent with memory
+|   |-- chat_agent.py         # LangGraph Adaptive-RAG agent with memory
+|   `-- finance_agent.py      # Tool-calling (ReAct) agent with memory
+|-- eval/                     # AI evaluation: dataset + evaluators
 |-- ml/forecaster.py          # Train, predict, persist, and reload ML models
 `-- routers/                  # Health, expenses, forecast, and chat routes
 
@@ -54,11 +60,15 @@ tests/
 |-- conftest.py
 |-- test_expenses.py
 |-- test_forecast.py
-`-- test_chat.py
+|-- test_chat.py              # Adaptive-RAG agent
+|-- test_agent.py             # Tool-calling agent
+|-- test_rag.py               # Persistent RAG index
+`-- test_eval.py              # Evaluation harness
 
 scripts/
 |-- seed_data.py              # Seed synthetic transactions via the API
-`-- verify_chat.py            # Live multi-turn chat verification (memory + numbers)
+|-- verify_chat.py            # Live multi-turn chat verification (memory + numbers)
+`-- evaluate.py               # AI evaluation runner (groundedness / recall / judge)
 ```
 
 ## Requirements
@@ -174,6 +184,9 @@ DATABASE_URL=postgresql+psycopg://expense:expense@localhost:5432/expense_db
 | `GET` | `/forecast/model-info` | Forecast model readiness and metadata |
 | `POST` | `/chat` | Ask plain-language questions about your finances (Adaptive RAG + memory) |
 | `POST` | `/chat/stream` | Same, streamed token-by-token (`text/plain`) |
+| `POST` | `/chat/agent` | Tool-calling (ReAct) variant — the LLM picks finance tools |
+| `POST` | `/chat/agent/stream` | Tool-calling variant, streamed (`text/plain`) |
+| `POST` | `/chat/reindex` | Rebuild the persistent RAG index (`?force=true|false`) |
 
 ## Example Workflow
 
@@ -303,6 +316,55 @@ With LM Studio running, this seeds deterministic data and runs a live 3-turn con
 python scripts/verify_chat.py
 ```
 
+### Tool-calling agent (ReAct)
+
+`POST /chat/agent` is a tool-calling variant: instead of pre-injecting retrieved facts, the LLM is given the finance services as **tools** (`get_category_summary`, `get_category_total`, `get_monthly_summary`, `get_biggest_category`, `get_forecast`, `list_months`, `list_recent_transactions`) and decides which to call (LangGraph's `create_react_agent`). It shares the same conversation memory as `/chat`.
+
+```bash
+curl -X POST http://localhost:8000/chat/agent \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Which category did I spend the most on?", "conversation_id": "user-42"}'
+```
+
+The response `sources` list the tool calls the model made (name + returned value), so the grounding is transparent. As with `/chat`, every figure is produced by the tools (the deterministic services) — never the model. `grounded` is `true` only when the model actually called a tool. A streaming variant is at `POST /chat/agent/stream`.
+
+> Adaptive RAG (`/chat`) vs ReAct (`/chat/agent`): RAG *guarantees* grounding by injecting facts before answering; ReAct is more flexible (the model chooses tools) but relies on the model to call them. Both are provided to compare the patterns.
+
+### Production RAG index
+
+By default (`RAG_PERSISTENT=true`) `/chat` retrieves from a **persistent Chroma index** under `RAG_PERSIST_DIR` (`./data/chroma`), not an ephemeral per-request one. Production patterns:
+
+- **Persistence**: embeddings live on disk and survive restarts.
+- **Fingerprint caching**: a cheap dataset signature (row count / max id / max `updated_at`) is stored next to the index; if nothing changed, queries skip re-embedding.
+- **Stable ids + clean rebuild on change**: documents carry stable ids (no duplicates); a data change triggers a rebuild so deleted rows never linger.
+- **Richer corpus**: summary/forecast fact cards plus transaction-level documents with category/month metadata.
+
+Force a rebuild (e.g. after bulk categorizing a new month):
+
+```bash
+curl -X POST "http://localhost:8000/chat/reindex?force=true"
+# -> {"status": "rebuilt", "documents": 42}
+```
+
+Set `RAG_PERSISTENT=false` to fall back to the ephemeral index (used by the test suite). For the PostgreSQL profile, point embeddings at the same store; pgvector can replace Chroma by swapping the vector store in `rag_index.py`.
+
+### AI evaluation
+
+`scripts/evaluate.py` scores the agent on a small labelled dataset (`app/eval/questions.json`) with three evaluator families:
+
+- **Numeric groundedness** (deterministic): does the answer contain the exact figure the services compute? Catches hallucinated/miscomputed numbers with no judge needed.
+- **Retrieval recall@k** (deterministic): did retrieval surface a fact for the expected category/month?
+- **LLM-as-judge**: faithfulness / relevance / correctness, scored by the local model (structured output, with a text-parse fallback).
+
+```powershell
+python scripts/evaluate.py              # adaptive-RAG agent, with judge
+python scripts/evaluate.py --agent      # tool-calling ReAct agent
+python scripts/evaluate.py --no-judge   # deterministic metrics only (fast)
+python scripts/evaluate.py --langsmith  # also upload the dataset to LangSmith
+```
+
+It prints per-question PASS/FAIL/HIT marks plus aggregate rates (`groundedness_numeric`, `retrieval_recall`, and `judge_*`). The deterministic evaluators run fully offline; the judge uses the configured LLM.
+
 ## Running Tests
 
 ```powershell
@@ -313,10 +375,10 @@ python -m pytest -q
 Current status:
 
 ```text
-47 passed
+70 passed
 ```
 
-The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling. The chat suite adds retrieval, relevance grading, the weak-grade rewrite path, grounded answering (LLM mocked), multi-turn memory, numeric correctness from the services, and LLM-down fallback — all fully offline (no LM Studio/network required).
+The tests cover upload, pagination, CRUD, manual categorization, validation, summaries, no-data forecasts, insufficient-data forecasts, training, prediction, confidence bounds, year rollover, persistence, LLM fallback behavior, and service exception handling. The AI suites add: Adaptive RAG (retrieve / grade / rewrite / answer / multi-turn memory / numeric correctness / fallback), the tool-calling agent (tool selection, memory, fallback), the persistent RAG index (build, fingerprint caching, rebuild-on-change, dedup, recall, `/chat/reindex`), and the evaluation harness (numeric groundedness, retrieval recall, LLM-as-judge) — all fully offline (LLM mocked, no LM Studio/network required).
 
 ## Notes for Development
 
