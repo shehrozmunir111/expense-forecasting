@@ -19,7 +19,7 @@ class FakeWriteModel(BaseChatModel):
     """Calls a write tool once, then answers from the tool result."""
 
     tool_name: str = "update_expense_category"
-    tool_args: dict = {"expense_id": 1, "category": "Subscription"}
+    tool_args: dict = {"expense_id": 1, "category": "Subscriptions"}
 
     @property
     def _llm_type(self) -> str:
@@ -44,27 +44,27 @@ def agent():
 
 
 def test_run_pauses_for_approval(agent, seeded_tools):
-    resp = agent.run("Recategorize expense 1 to Subscription", "h-1", seeded_tools,
+    resp = agent.run("Recategorize expense 1 to Subscriptions", "h-1", seeded_tools,
                      llm=FakeWriteModel())
     assert resp.status == "pending_approval"
     assert resp.pending["action"] == "update_category"
     assert resp.pending["expense_id"] == 1
     # Nothing changed yet.
-    assert seeded_tools.repo.get_by_id(1).category != "Subscription"
+    assert seeded_tools.repo.get_by_id(1).category != "Subscriptions"
 
 
 def test_approve_executes_write(agent, seeded_tools):
-    agent.run("Recategorize expense 1 to Subscription", "h-2", seeded_tools, llm=FakeWriteModel())
+    agent.run("Recategorize expense 1 to Subscriptions", "h-2", seeded_tools, llm=FakeWriteModel())
     resp = agent.approve("h-2", True, seeded_tools, llm=FakeWriteModel())
     assert resp.status == "completed"
     expense = seeded_tools.repo.get_by_id(1)
-    assert expense.category == "Subscription"
+    assert expense.category == "Subscriptions"
     assert expense.categorization_status == "manual"
 
 
 def test_reject_cancels_write(agent, seeded_tools):
     before = seeded_tools.repo.get_by_id(1).category
-    agent.run("Recategorize expense 1 to Subscription", "h-3", seeded_tools, llm=FakeWriteModel())
+    agent.run("Recategorize expense 1 to Subscriptions", "h-3", seeded_tools, llm=FakeWriteModel())
     resp = agent.approve("h-3", False, seeded_tools, llm=FakeWriteModel())
     assert resp.status == "completed"
     assert seeded_tools.repo.get_by_id(1).category == before  # unchanged
@@ -94,10 +94,10 @@ def test_hitl_endpoints(client, db, monkeypatch):
     monkeypatch.setattr("app.services.action_agent._safe_chat_model",
                         lambda streaming=False: FakeWriteModel())
 
-    r1 = client.post("/chat/action", json={"message": "Recategorize expense 1 to Subscription",
+    r1 = client.post("/chat/action", json={"message": "Recategorize expense 1 to Subscriptions",
                                            "conversation_id": "h-http"})
     assert r1.json()["status"] == "pending_approval"
 
     r2 = client.post("/chat/approve", json={"conversation_id": "h-http", "approved": True})
     assert r2.json()["status"] == "completed"
-    assert db.query(Expense).filter(Expense.id == 1).first().category == "Subscription"
+    assert db.query(Expense).filter(Expense.id == 1).first().category == "Subscriptions"

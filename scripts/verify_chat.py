@@ -66,7 +66,7 @@ def build_tools() -> FinanceTools:
                     Expense(
                         raw_text=f"{category} purchase",
                         amount=amt,
-                        currency="UAH",
+                        currency="USD",
                         date=date(year, mm, 12),
                         category=category,
                         categorization_status="categorized",
@@ -96,10 +96,10 @@ def main():
     feb_groc = tools.category_total("Groceries", "2024-02")["total"]
     totals = {r["category"]: r["total"] for r in tools.category_summary()}
     biggest = max(totals, key=totals.get)
-    print(f"  Jan 2024 Groceries total : {jan_groc:.2f} UAH")
-    print(f"  Feb 2024 Groceries total : {feb_groc:.2f} UAH")
+    print(f"  Jan 2024 Groceries total : {jan_groc:.2f} USD")
+    print(f"  Feb 2024 Groceries total : {feb_groc:.2f} USD")
     print(f"  All-time totals          : {totals}")
-    print(f"  Biggest category overall : {biggest} ({totals[biggest]:.2f} UAH)")
+    print(f"  Biggest category overall : {biggest} ({totals[biggest]:.2f} USD)")
     fc = tools.forecast()
     if fc:
         print(f"  Forecast month           : {fc['forecast_month']}")

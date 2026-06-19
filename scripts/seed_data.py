@@ -16,15 +16,17 @@ from datetime import date, timedelta
 import httpx
 
 TEMPLATES = {
-    "Groceries":      [("ATB", 200, 700), ("Silpo", 300, 900), ("Novus", 150, 600)],
-    "Car/Fuel":       [("WOG", 500, 1500), ("OKKO", 600, 1800), ("Shell", 400, 1200)],
-    "Dining":         [("McDonald's", 80, 250), ("KFC", 100, 280), ("Cafe delivery", 150, 400)],
+    "Food & Dining":  [("ATB", 200, 700), ("Silpo", 300, 900), ("Novus", 150, 600), ("McDonald's", 80, 250), ("KFC", 100, 280), ("Cafe delivery", 150, 400)],
+    "Transportation": [("WOG", 500, 1500), ("OKKO", 600, 1800), ("Shell", 400, 1200), ("Uber", 50, 200), ("Bolt taxi", 80, 250), ("Metro", 20, 60)],
     "Utilities":      [("Kyivenergo", 400, 700), ("Internet Lanet", 200, 300), ("Vodafone", 100, 200)],
-    "Transport":      [("Uber", 50, 200), ("Bolt taxi", 80, 250), ("Metro", 20, 60)],
     "Entertainment":  [("Steam", 200, 800), ("Cinema", 150, 400), ("Books", 100, 350)],
     "Healthcare":     [("Apteka", 100, 500), ("Clinic", 300, 1500)],
-    "Subscription":   [("Netflix", 149, 149), ("Spotify", 99, 99), ("ChatGPT Plus", 800, 800)],
+    "Subscriptions":  [("Netflix", 149, 149), ("Spotify", 99, 99), ("ChatGPT Plus", 800, 800)],
     "Shopping":       [("Rozetka", 300, 2000), ("H&M", 500, 2500), ("Prom.ua", 200, 1500)],
+    "Housing":        [("Rent Payment", 8000, 15000)],
+    "Travel":         [("Airbnb", 1500, 4000), ("WizzAir", 1200, 3000)],
+    "Insurance":      [("TAS Insurance", 500, 1200)],
+    "Education":      [("Udemy", 300, 800), ("Coursera", 1000, 2000)],
 }
 
 
@@ -39,9 +41,9 @@ def generate_month(year: int, month: int):
             amount = round(random.uniform(lo, hi), 2)
             day = random.randint(1, 28)
             transactions.append({
-                "raw_text": f"{vendor} {int(amount)} UAH",
+                "raw_text": f"{vendor} {int(amount)} USD",
                 "amount": amount,
-                "currency": "UAH",
+                "currency": "USD",
                 "date": str(date(year, month, day)),
                 "source": "PrivatBank",
                 "is_income": False,
@@ -51,7 +53,7 @@ def generate_month(year: int, month: int):
     transactions.append({
         "raw_text": "Salary transfer",
         "amount": round(random.uniform(25000, 45000), 2),
-        "currency": "UAH",
+        "currency": "USD",
         "date": str(date(year, month, 5)),
         "source": "PrivatBank",
         "is_income": True,

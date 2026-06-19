@@ -116,6 +116,18 @@ def chat_agent_stream(payload: ChatRequest, db: Session = Depends(get_db)):
     )
 
 
+@router.post("/auto", response_model=ChatResponse)
+def chat_auto(payload: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Auto-select the best approach for each request.
+    Routes to Adaptive RAG, ReAct Agent, or Action (HITL) automatically
+    based on the user's message. Reports the chosen route as `routed_to`.
+    """
+    tools = FinanceTools(ExpenseRepository(db))
+    return supervisor.run(payload.message, payload.conversation_id, tools,
+                          retriever=_build_retriever(tools))
+
+
 @router.post("/supervisor", response_model=ChatResponse)
 def chat_supervisor(payload: ChatRequest, db: Session = Depends(get_db)):
     """

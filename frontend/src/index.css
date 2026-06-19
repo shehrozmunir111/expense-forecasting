@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f0f13;
+  --color-foreground: #f1f1f6;
+  --color-card: #1a1a22;
+  --color-card-foreground: #f1f1f6;
+  --color-popover: #1a1a22;
+  --color-popover-foreground: #f1f1f6;
+  --color-primary: #7c5cfc;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #2a2a35;
+  --color-secondary-foreground: #f1f1f6;
+  --color-muted: #23232e;
+  --color-muted-foreground: #9ca3af;
+  --color-accent: #2a2a35;
+  --color-accent-foreground: #f1f1f6;
+  --color-destructive: #fb7185;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #2a2a35;
+  --color-input: #2a2a35;
+  --color-ring: #7c5cfc;
+  --color-sidebar: #14141b;
+  --color-sidebar-foreground: #f1f1f6;
+  --color-sidebar-accent: #1e1e28;
+  --color-sidebar-accent-foreground: #f1f1f6;
+  --color-sidebar-ring: #7c5cfc;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-coral: #fb7185;
+  --radius: 0.75rem;
+}
+
+.light {
+  --color-background: #f8f9fc;
+  --color-foreground: #1a1a22;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1a22;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1a22;
+  --color-secondary: #f0f0f5;
+  --color-secondary-foreground: #1a1a22;
+  --color-muted: #f0f0f5;
+  --color-muted-foreground: #6b7280;
+  --color-accent: #f0f0f5;
+  --color-accent-foreground: #1a1a22;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #1a1a22;
+  --color-sidebar-accent: #f0f0f5;
+  --color-sidebar-accent-foreground: #1a1a22;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.typing-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}

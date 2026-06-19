@@ -37,7 +37,7 @@ def index(tmp_path):
 
 
 def _add(db, category, amount, d, status="categorized"):
-    db.add(Expense(raw_text=f"{category} tx", amount=amount, currency="UAH",
+    db.add(Expense(raw_text=f"{category} tx", amount=amount, currency="USD",
                    date=d, category=category, categorization_status=status))
     db.commit()
 
@@ -55,7 +55,7 @@ def test_build_documents_has_cards_and_transactions(seeded_tools):
     assert "transaction" in kinds  # transaction-level docs included
     # a Jan groceries transaction doc carries category/month metadata
     tx = [d for d in docs if d.metadata["kind"] == "transaction"
-          and d.metadata.get("category") == "Groceries" and d.metadata.get("month") == "2024-01"]
+          and d.metadata.get("category") == "Food & Dining" and d.metadata.get("month") == "2024-01"]
     assert tx
 
 
@@ -77,7 +77,7 @@ def test_ensure_fresh_detects_data_change(index, seeded_tools):
     index.ensure_fresh(seeded_tools)
     before = index._count()
     # Add a new transaction -> signature changes -> rebuild with more docs.
-    _add(seeded_tools.repo.db, "Dining", 99.0, date(2024, 3, 20))
+    _add(seeded_tools.repo.db, "Food & Dining", 99.0, date(2024, 3, 20))
     result = index.ensure_fresh(seeded_tools)
     assert result["status"] == "rebuilt"
     assert index._count() > before
@@ -107,14 +107,14 @@ def test_persistence_survives_new_instance(tmp_path, seeded_tools):
 
 def test_retrieve_recall(index, seeded_tools):
     index.ensure_fresh(seeded_tools)
-    docs = index.retrieve("groceries spending in January 2024", k=5)
+    docs = index.retrieve("Food & Dining spending in January 2024", k=5)
     assert docs
-    assert any("Groceries" in (d.metadata.get("category") or "") for d in docs)
+    assert any("Food & Dining" in (d.metadata.get("category") or "") for d in docs)
 
 
 def test_retriever_adapter_lazy_refresh(index, seeded_tools):
     retriever = RagIndexRetriever(index, seeded_tools, k=3)
-    docs = retriever.retrieve("biggest car fuel spending")
+    docs = retriever.retrieve("biggest transportation spending")
     assert docs
     retriever.close()  # no-op for persistent index; must not raise
     assert index._count() > 0

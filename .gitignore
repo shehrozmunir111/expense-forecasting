@@ -8,6 +8,16 @@ data/
 *.json
 !scripts/
 !app/eval/questions.json
+
+# Local debug / throwaway scripts (keep out of the repo)
+scripts/check_data.py
+scripts/debug_rag.py
+scripts/test_chat.py
 .pytest_cache/
 .venv/
 dist/
+*.log
+test_GUI.txt
+frontend/node_modules/
+frontend/dist/
+frontend/.env

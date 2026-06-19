@@ -46,9 +46,9 @@ from app.services.llm_provider import get_chat_model
 
 # Must match the expected values in app/eval/questions.json.
 SEED = {
-    "2024-01": {"Groceries": [500.0, 300.0], "Car/Fuel": [1200.0], "Dining": [200.0]},
-    "2024-02": {"Groceries": [700.0], "Car/Fuel": [1100.0], "Dining": [250.0]},
-    "2024-03": {"Groceries": [200.0], "Car/Fuel": [1300.0], "Dining": [180.0]},
+    "2024-01": {"Food & Dining": [500.0, 300.0], "Transportation": [1200.0], "Healthcare": [200.0]},
+    "2024-02": {"Food & Dining": [700.0], "Transportation": [1100.0], "Healthcare": [250.0]},
+    "2024-03": {"Food & Dining": [200.0], "Transportation": [1300.0], "Healthcare": [180.0]},
 }
 
 
@@ -62,7 +62,7 @@ def build_tools() -> FinanceTools:
         year, mm = (int(x) for x in month.split("-"))
         for category, amounts in cats.items():
             for amt in amounts:
-                db.add(Expense(raw_text=f"{category} tx", amount=amt, currency="UAH",
+                db.add(Expense(raw_text=f"{category} tx", amount=amt, currency="USD",
                                date=date(year, mm, 12), category=category,
                                categorization_status="categorized"))
     db.commit()

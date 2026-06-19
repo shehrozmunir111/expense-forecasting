@@ -8,9 +8,9 @@ def _expense_payload(n=2, auto_categorize=False):
     return {
         "expenses": [
             {
-                "raw_text": f"ATB {i * 100} UAH",
+                "raw_text": f"ATB {i * 100} USD",
                 "amount": float(i * 100),
-                "currency": "UAH",
+                "currency": "USD",
                 "date": f"2024-0{(i % 2) + 1}-{i + 10}",
                 "source": "PrivatBank",
             }
@@ -55,7 +55,7 @@ def test_upload_auto_categorize_queues(client):
 
 def test_upload_validates_amount(client):
     payload = {
-        "expenses": [{"raw_text": "ATB", "amount": -50.0, "currency": "UAH", "date": "2024-01-01"}],
+        "expenses": [{"raw_text": "ATB", "amount": -50.0, "currency": "USD", "date": "2024-01-01"}],
         "auto_categorize": False,
     }
     r = client.post("/expenses/upload", json=payload)
@@ -84,8 +84,8 @@ def test_list_filter_is_income(client):
     # Upload mix of expenses and income
     payload = {
         "expenses": [
-            {"raw_text": "Salary", "amount": 30000.0, "currency": "UAH", "date": "2024-01-01", "is_income": True},
-            {"raw_text": "ATB", "amount": 450.0, "currency": "UAH", "date": "2024-01-02", "is_income": False},
+            {"raw_text": "Salary", "amount": 30000.0, "currency": "USD", "date": "2024-01-01", "is_income": True},
+            {"raw_text": "ATB", "amount": 450.0, "currency": "USD", "date": "2024-01-02", "is_income": False},
         ],
         "auto_categorize": False,
     }
@@ -99,7 +99,7 @@ def test_list_filter_is_income(client):
 def test_list_status_filter_total_matches_items(client):
     upload = client.post("/expenses/upload", json=_expense_payload(2))
     eids = upload.json()["expense_ids"]
-    client.patch(f"/expenses/{eids[0]}", json={"category": "Groceries"})
+    client.patch(f"/expenses/{eids[0]}", json={"category": "Food & Dining"})
 
     r = client.get("/expenses/?status=manual")
     body = r.json()
@@ -134,10 +134,10 @@ def test_get_expense_not_found(client):
 def test_update_category_manual(client):
     upload = client.post("/expenses/upload", json=_expense_payload(1))
     eid = upload.json()["expense_ids"][0]
-    r = client.patch(f"/expenses/{eid}", json={"category": "Groceries"})
+    r = client.patch(f"/expenses/{eid}", json={"category": "Food & Dining"})
     assert r.status_code == 200
     body = r.json()
-    assert body["category"] == "Groceries"
+    assert body["category"] == "Food & Dining"
     assert body["categorization_status"] == "manual"
     assert body["category_confidence"] == 1.0
 
@@ -172,21 +172,21 @@ def test_category_summary_with_data(client):
     # Upload and manually categorize
     upload = client.post("/expenses/upload", json=_expense_payload(2))
     eids = upload.json()["expense_ids"]
-    client.patch(f"/expenses/{eids[0]}", json={"category": "Groceries"})
-    client.patch(f"/expenses/{eids[1]}", json={"category": "Car/Fuel"})
+    client.patch(f"/expenses/{eids[0]}", json={"category": "Food & Dining"})
+    client.patch(f"/expenses/{eids[1]}", json={"category": "Transportation"})
 
     r = client.get("/expenses/summary/by-category")
     assert r.status_code == 200
     cats = {c["category"] for c in r.json()}
-    assert "Groceries" in cats
-    assert "Car/Fuel" in cats
+    assert "Food & Dining" in cats
+    assert "Transportation" in cats
 
 
 def test_monthly_summary_counts_transactions(client):
     upload = client.post("/expenses/upload", json=_expense_payload(2))
     eids = upload.json()["expense_ids"]
-    client.patch(f"/expenses/{eids[0]}", json={"category": "Groceries"})
-    client.patch(f"/expenses/{eids[1]}", json={"category": "Car/Fuel"})
+    client.patch(f"/expenses/{eids[0]}", json={"category": "Food & Dining"})
+    client.patch(f"/expenses/{eids[1]}", json={"category": "Transportation"})
 
     r = client.get("/expenses/summary/monthly?month=2024-01")
     assert r.status_code == 200

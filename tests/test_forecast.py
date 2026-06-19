@@ -13,8 +13,8 @@ from app.services.forecasting import ForecastingService
 def _make_monthly_data(n_months: int):
     """Generate n_months of synthetic categorized data."""
     data = []
-    categories = ["Groceries", "Car/Fuel", "Utilities"]
-    base = {"Groceries": 3000.0, "Car/Fuel": 1500.0, "Utilities": 800.0}
+    categories = ["Food & Dining", "Transportation", "Utilities"]
+    base = {"Food & Dining": 3000.0, "Transportation": 1500.0, "Utilities": 800.0}
 
     for i in range(n_months):
         year = 2024 + i // 12
@@ -64,7 +64,7 @@ def test_predict_returns_all_categories(forecaster):
     assert "forecast_month" in pred
     assert "predictions" in pred
     preds = pred["predictions"]
-    for cat in ["Groceries", "Car/Fuel", "Utilities"]:
+    for cat in ["Food & Dining", "Transportation", "Utilities"]:
         assert cat in preds
         assert preds[cat]["predicted_amount"] >= 0
 
@@ -104,10 +104,10 @@ def test_model_persists_and_reloads(forecaster, tmp_path, monkeypatch):
 
 def test_missing_category_month_uses_zero_last_month_total(forecaster):
     forecaster.train([
-        {"month": "2024-01", "category": "Groceries", "total": 100.0, "count": 1},
+        {"month": "2024-01", "category": "Food & Dining", "total": 100.0, "count": 1},
         {"month": "2024-02", "category": "Utilities", "total": 200.0, "count": 1},
     ])
-    assert forecaster.meta["last_month_totals"]["Groceries"] == 0.0
+    assert forecaster.meta["last_month_totals"]["Food & Dining"] == 0.0
     assert forecaster.meta["last_month_totals"]["Utilities"] == 200.0
 
 
@@ -115,20 +115,20 @@ def test_forecast_response_sorts_categories():
     response = ForecastResponse(
         forecast_month="2024-03",
         total_predicted=30.0,
-        currency="UAH",
+        currency="USD",
         categories=[
             CategoryForecast(
                 category="Utilities",
                 predicted_amount=10.0,
-                currency="UAH",
+                currency="USD",
                 confidence_interval_low=8.5,
                 confidence_interval_high=11.5,
                 trend="stable",
             ),
             CategoryForecast(
-                category="Groceries",
+                category="Food & Dining",
                 predicted_amount=20.0,
-                currency="UAH",
+                currency="USD",
                 confidence_interval_low=17.0,
                 confidence_interval_high=23.0,
                 trend="stable",
@@ -138,18 +138,18 @@ def test_forecast_response_sorts_categories():
         months_of_history=2,
         generated_at="2024-02-01T00:00:00Z",
     )
-    assert [c.category for c in response.categories] == ["Groceries", "Utilities"]
+    assert [c.category for c in response.categories] == ["Food & Dining", "Utilities"]
 
 
 def test_categorization_parse_falls_back_for_malformed_items():
     service = CategorizationService()
     result = service._parse_response(
-        '[{"category": "Groceries", "confidence": 0.9}, {"id": 2, "category": "Bad"}]',
-        fallback_ids=[1, 2],
+        '[{"id": 1, "category": "Food & Dining", "confidence": 0.9}, {"id": 2, "category": "Bad", "confidence": 0.8}]',
+        fallback_transactions=[{"id": 1, "is_income": False}, {"id": 2, "is_income": True}],
     )
     assert result == [
-        {"id": 1, "category": "Other", "confidence": 0.0},
-        {"id": 2, "category": "Other", "confidence": 0.5},
+        {"id": 1, "category": "Food & Dining", "confidence": 0.9},
+        {"id": 2, "category": "Other Income", "confidence": 0.8},
     ]
 
 

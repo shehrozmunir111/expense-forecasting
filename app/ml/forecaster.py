@@ -240,7 +240,7 @@ class ExpenseForecaster:
             "model_info": {
                 "trained_at": self.meta["trained_at"],
                 "algorithm": "GradientBoosting / LinearRegression (per-category)",
-                "version": "1.0.0",
+                "version": "2.0.5",
                 "features": ["month_ordinal", "month_number", "quarter", "lag_1_month"],
             },
         }

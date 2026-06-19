@@ -32,40 +32,54 @@ def test_classify_action_keywords():
 
 
 def test_classify_qa_default():
-    assert classify("How much did I spend on groceries in January?", None) == "qa"
-    assert classify("What's my forecast for next month?", None) == "qa"
+    assert classify("How much did I spend on groceries in January?", None) == "rag"
+    assert classify("What's my forecast for next month?", None) == "rag"
+
+def test_classify_agent():
+    assert classify("Which category did I spend the most on?", None) == "rag"
+
+def test_classify_agent_keyword_fallback():
+    assert classify("Compare this month to last month", None) == "rag"
 
 
 # --------------------------------------------------------------------------- #
 # Handoff                                                                      #
 # --------------------------------------------------------------------------- #
 
-def test_supervisor_routes_qa_to_chat_agent(seeded_tools):
-    qa, action = StubAgent("qa"), StubAgent("action")
-    sup = Supervisor(qa_agent=qa, action_agent=action)
+def test_supervisor_routes_rag_to_chat_agent(seeded_tools):
+    qa, action, agent = StubAgent("rag"), StubAgent("action"), StubAgent("agent")
+    sup = Supervisor(qa_agent=qa, action_agent=action, finance_agent=agent)
     resp = sup.run("How much on groceries in Jan?", "s-1", seeded_tools, llm=None)
-    assert resp.routed_to == "qa"
-    assert qa.calls and not action.calls
-    assert "qa handled" in resp.answer
+    assert resp.routed_to == "rag"
+    assert qa.calls and not action.calls and not agent.calls
 
 
 def test_supervisor_routes_action_to_action_agent(seeded_tools):
-    qa, action = StubAgent("qa"), StubAgent("action")
-    sup = Supervisor(qa_agent=qa, action_agent=action)
+    qa, action, agent = StubAgent("rag"), StubAgent("action"), StubAgent("agent")
+    sup = Supervisor(qa_agent=qa, action_agent=action, finance_agent=agent)
     resp = sup.run("Delete expense 2", "s-2", seeded_tools, llm=None)
     assert resp.routed_to == "action"
-    assert action.calls and not qa.calls
+    assert action.calls and not qa.calls and not agent.calls
+
+
+def test_supervisor_routes_agent_to_finance_agent(seeded_tools):
+    qa, action, agent = StubAgent("rag"), StubAgent("action"), StubAgent("agent")
+    sup = Supervisor(qa_agent=qa, action_agent=action, finance_agent=agent)
+    resp = sup.run("Which category did I spend the most on?", "s-3", seeded_tools, llm=None)
+    assert resp.routed_to == "agent"
+    assert agent.calls and not qa.calls and not action.calls
 
 
 def test_supervisor_endpoint_routes(client, db, monkeypatch):
     from tests.conftest import seed_categorized
     seed_categorized(db)
-    qa, action = StubAgent("qa"), StubAgent("action")
-    monkeypatch.setattr("app.routers.chat.supervisor", Supervisor(qa_agent=qa, action_agent=action))
+    qa, action, agent = StubAgent("rag"), StubAgent("action"), StubAgent("agent")
+    monkeypatch.setattr("app.routers.chat.supervisor",
+                        Supervisor(qa_agent=qa, action_agent=action, finance_agent=agent))
     monkeypatch.setattr("app.services.supervisor._safe_chat_model", lambda streaming=False: None)
 
     r = client.post("/chat/supervisor", json={"message": "How much on dining in Feb 2024?",
                                               "conversation_id": "s-http"})
     body = r.json()
-    assert body["routed_to"] == "qa"
-    assert "qa handled" in body["answer"]
+    assert body["routed_to"] == "rag"
+    assert "rag handled" in body["answer"]

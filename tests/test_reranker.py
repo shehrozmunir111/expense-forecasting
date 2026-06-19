@@ -12,9 +12,9 @@ from app.services.reranker import lexical_rerank, lexical_score, rerank
 
 def _docs():
     return [
-        Document(page_content="In 2024-02, spending on Dining was 250.00 UAH."),
-        Document(page_content="In 2024-01, spending on Groceries was 800.00 UAH over 2 transactions."),
-        Document(page_content="Forecast for 2024-04: Car/Fuel predicted at 1400.00 UAH."),
+        Document(page_content="In 2024-02, spending on Dining was 250.00 USD."),
+        Document(page_content="In 2024-01, spending on Groceries was 800.00 USD over 2 transactions."),
+        Document(page_content="Forecast for 2024-04: Car/Fuel predicted at 1400.00 USD."),
         Document(page_content="In 2024-01, spending on Groceries was the largest grocery month."),
     ]
 

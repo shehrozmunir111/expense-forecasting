@@ -7,7 +7,7 @@ from app.models.expense import EXPENSE_CATEGORIES
 class ExpenseInput(BaseModel):
     raw_text: str = Field(..., min_length=1, max_length=500, description="Raw bank transaction text")
     amount: float = Field(..., gt=0, description="Transaction amount (positive)")
-    currency: str = Field(default="UAH", max_length=10)
+    currency: str = Field(default="USD", max_length=10)
     date: dt.date = Field(..., description="Transaction date")
     source: Optional[str] = Field(None, max_length=100, description="Bank or import source")
     notes: Optional[str] = Field(None, max_length=1000)
@@ -16,11 +16,11 @@ class ExpenseInput(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "raw_text": "ATB 450 UAH",
+                "raw_text": "Walmart grocery 450 USD",
                 "amount": 450.0,
-                "currency": "UAH",
+                "currency": "USD",
                 "date": "2024-01-15",
-                "source": "PrivatBank",
+                "source": "Chase Bank",
             }
         }
     }

@@ -33,7 +33,8 @@ _SYSTEM = (
     "ALWAYS use the provided tools to obtain figures — never invent or estimate "
     "numbers yourself. Pick the most specific tool for the question, call it, then "
     "answer concisely (1-3 sentences) using the returned numbers verbatim. Currency "
-    "is UAH. Months are YYYY-MM. If a tool reports no data, say you don't have it yet."
+    "is USD. Months are YYYY-MM. If a tool reports no data, say you don't have it yet."
+    " Answer ONLY the specific time period the user asked about."
 )
 
 
@@ -47,7 +48,7 @@ def build_finance_toolset(tools: FinanceTools) -> List[StructuredTool]:
         if not rows:
             return f"No categorized spending found{f' for {month}' if month else ''}."
         scope = month or "all time"
-        parts = [f"{r['category']}: {r['total']:.2f} UAH ({r['count']} tx)" for r in rows]
+        parts = [f"{r['category']}: {r['total']:.2f} USD ({r['count']} tx)" for r in rows]
         return f"Spending by category ({scope}): " + "; ".join(parts)
 
     def get_monthly_summary(month: str) -> str:
@@ -55,8 +56,8 @@ def build_finance_toolset(tools: FinanceTools) -> List[StructuredTool]:
         ms = tools.monthly_summary(month)
         top = "; ".join(f"{c['category']} {c['total']:.2f}" for c in ms["categories"][:5])
         return (
-            f"{month}: expenses {ms['total_expenses']:.2f} UAH, income "
-            f"{ms['total_income']:.2f} UAH, net {ms['net']:.2f} UAH. Categories: "
+            f"{month}: expenses {ms['total_expenses']:.2f} USD, income "
+            f"{ms['total_income']:.2f} USD, net {ms['net']:.2f} USD. Categories: "
             f"{top or 'none'}."
         )
 
@@ -67,7 +68,7 @@ def build_finance_toolset(tools: FinanceTools) -> List[StructuredTool]:
         scope = month or "all time"
         if not row:
             return f"No spending on {category} for {scope}."
-        return (f"{category} ({scope}): {row['total']:.2f} UAH over {row['count']} "
+        return (f"{category} ({scope}): {row['total']:.2f} USD over {row['count']} "
                 f"transactions.")
 
     def get_biggest_category() -> str:
@@ -76,7 +77,7 @@ def build_finance_toolset(tools: FinanceTools) -> List[StructuredTool]:
         if not rows:
             return "No categorized spending found."
         top = max(rows, key=lambda r: r["total"])
-        return f"Biggest category overall: {top['category']} at {top['total']:.2f} UAH."
+        return f"Biggest category overall: {top['category']} at {top['total']:.2f} USD."
 
     def get_forecast() -> str:
         """Next-month per-category spending forecast (requires >= 2 months history)."""
@@ -201,9 +202,9 @@ class FinanceReactAgent:
         else:
             top = sorted(rows, key=lambda r: -r["total"])[:3]
             answer = ("I couldn't reach the language model, but your top categories are: "
-                      + "; ".join(f"{r['category']} {r['total']:.2f} UAH" for r in top) + ".")
+                      + "; ".join(f"{r['category']} {r['total']:.2f} USD" for r in top) + ".")
             sources = [Source(kind="category_summary", label=r["category"],
-                              detail=f"{r['category']}: {r['total']:.2f} UAH") for r in top]
+                              detail=f"{r['category']}: {r['total']:.2f} USD") for r in top]
         return ChatResponse(answer=answer, sources=sources, conversation_id=cid,
                             rewritten=False, grounded=False)
 

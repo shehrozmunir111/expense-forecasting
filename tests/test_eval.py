@@ -38,10 +38,10 @@ def test_dataset_loads_and_is_well_formed():
 # --------------------------------------------------------------------------- #
 
 def test_numeric_match_various_formats():
-    assert numeric_match("You spent 800.00 UAH", 800.0) is True
-    assert numeric_match("It was 800 UAH", 800.0) is True
-    assert numeric_match("Total: 1,300.00 UAH", 1300.0) is True   # comma stripped
-    assert numeric_match("You spent 750 UAH", 800.0) is False
+    assert numeric_match("You spent 800.00 USD", 800.0) is True
+    assert numeric_match("It was 800 USD", 800.0) is True
+    assert numeric_match("Total: 1,300.00 USD", 1300.0) is True   # comma stripped
+    assert numeric_match("You spent 750 USD", 800.0) is False
     assert numeric_match("no number expected", None) is None
 
 
@@ -52,7 +52,7 @@ def test_numeric_match_various_formats():
 def test_retrieval_hit_matches_category_and_month():
     sources = [
         Source(kind="category_summary", label="Groceries 2024-01",
-               detail="In 2024-01, spending on Groceries was 800.00 UAH."),
+               detail="In 2024-01, spending on Groceries was 800.00 USD."),
         Source(kind="forecast", label="Forecast Dining 2024-04", detail="..."),
     ]
     assert retrieval_hit(sources, "Groceries", "2024-01") is True
@@ -62,7 +62,7 @@ def test_retrieval_hit_matches_category_and_month():
 
 
 def test_retrieval_hit_accepts_dict_sources():
-    sources = [{"label": "Car/Fuel 2024-03", "detail": "In 2024-03, Car/Fuel was 1300.00 UAH."}]
+    sources = [{"label": "Car/Fuel 2024-03", "detail": "In 2024-03, Car/Fuel was 1300.00 USD."}]
     assert retrieval_hit(sources, "Car/Fuel", "2024-03") is True
 
 
@@ -96,12 +96,12 @@ def test_run_evaluation_aggregates():
 
     def answer_fn(q):
         if "groceries" in q:
-            return {"answer": "You spent 800.00 UAH.",
+            return {"answer": "You spent 800.00 USD.",
                     "sources": [Source(kind="category_summary", label="Groceries 2024-01",
-                                       detail="In 2024-01 Groceries was 800.00 UAH.")]}
-        return {"answer": "It was 999.00 UAH.",  # wrong number on purpose
+                                       detail="In 2024-01 Groceries was 800.00 USD.")]}
+        return {"answer": "It was 999.00 USD.",  # wrong number on purpose
                 "sources": [Source(kind="category_summary", label="Car/Fuel 2024-03",
-                                   detail="In 2024-03 Car/Fuel was 1300.00 UAH.")]}
+                                   detail="In 2024-03 Car/Fuel was 1300.00 USD.")]}
 
     report = run_evaluation(dataset, answer_fn, judge_llm=None)
     assert report["aggregate"]["n"] == 2
@@ -115,9 +115,9 @@ def test_run_evaluation_with_judge():
                 "expected_category": "Groceries", "expected_month": "2024-01"}]
 
     def answer_fn(q):
-        return {"answer": "You spent 800.00 UAH.",
+        return {"answer": "You spent 800.00 USD.",
                 "sources": [Source(kind="category_summary", label="Groceries 2024-01",
-                                   detail="In 2024-01 Groceries was 800.00 UAH.")]}
+                                   detail="In 2024-01 Groceries was 800.00 USD.")]}
 
     judge = FakeListChatModel(responses=["faithful=yes relevant=yes correct=yes"])
     report = run_evaluation(dataset, answer_fn, judge_llm=judge)

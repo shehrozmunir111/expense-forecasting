@@ -42,24 +42,24 @@ def test_input_flags_off_topic_softly():
 # --------------------------------------------------------------------------- #
 
 def test_output_grounded_when_numbers_in_context():
-    ctx = "In 2024-01, spending on Groceries was 800.00 UAH over 2 transactions."
-    g = check_output("You spent 800.00 UAH on groceries.", ctx)
+    ctx = "In 2024-01, spending on Groceries was 800.00 USD over 2 transactions."
+    g = check_output("You spent 800.00 USD on groceries.", ctx)
     assert g.grounded is True
     assert g.passed is True
     assert g.ungrounded_numbers == []
 
 
 def test_output_flags_hallucinated_number():
-    ctx = "In 2024-01, spending on Groceries was 800.00 UAH."
-    g = check_output("You spent 950.00 UAH on groceries.", ctx)
+    ctx = "In 2024-01, spending on Groceries was 800.00 USD."
+    g = check_output("You spent 950.00 USD on groceries.", ctx)
     assert g.grounded is False
     assert "ungrounded_numbers" in g.flags
     assert "950.00" in g.ungrounded_numbers
 
 
 def test_output_normalizes_trailing_zeros():
-    ctx = "Groceries total was 800 UAH."
-    assert check_output("You spent 800.00 UAH.", ctx).grounded is True
+    ctx = "Groceries total was 800 USD."
+    assert check_output("You spent 800.00 USD.", ctx).grounded is True
 
 
 def test_output_flags_pii_email():
@@ -89,10 +89,10 @@ def test_chat_attaches_guardrail_flags(client, db, monkeypatch):
     monkeypatch.setattr(
         "app.services.chat_agent._safe_chat_model",
         lambda streaming=False: FakeListChatModel(
-            responses=["USEFUL", "You spent 800.00 UAH on groceries in January 2024."]),
+            responses=["USEFUL", "You spent 800.00 USD on Food & Dining in January 2024."]),
     )
     monkeypatch.setattr("app.services.finance_retriever.get_embeddings", lambda: HashingEmbeddings())
-    r = client.post("/chat", json={"message": "How much on groceries in January 2024?",
+    r = client.post("/chat", json={"message": "How much on Food & Dining in January 2024?",
                                    "conversation_id": "g-2"})
     body = r.json()
     assert body["status"] == "completed"

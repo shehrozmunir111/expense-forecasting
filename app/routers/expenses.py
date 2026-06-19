@@ -131,7 +131,7 @@ def category_summary(
             category=r["category"],
             total_amount=round(r["total"], 2),
             transaction_count=r["count"],
-            currency="UAH",
+            currency="USD",
             percentage=round((r["total"] / total * 100) if total else 0, 2),
         )
         for r in raw
@@ -151,7 +151,7 @@ def monthly_summary(
             category=c["category"],
             total_amount=round(c["total"], 2),
             transaction_count=c["count"],
-            currency="UAH",
+            currency="USD",
             percentage=round(c["percentage"], 2),
         )
         for c in data["categories"]
@@ -164,7 +164,7 @@ def monthly_summary(
         total_expenses=data["total_expenses"],
         total_income=data["total_income"],
         net=data["net"],
-        currency="UAH",
+        currency="USD",
         categories=categories,
         transaction_count=tx_count,
     )

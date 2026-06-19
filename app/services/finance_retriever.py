@@ -30,7 +30,7 @@ def build_fact_cards(tools: FinanceTools, max_months: int = 6) -> List[Document]
         docs.append(
             Document(
                 page_content=(
-                    f"All-time spending on {r['category']}: {r['total']:.2f} UAH "
+                    f"All-time spending on {r['category']}: {r['total']:.2f} USD "
                     f"across {r['count']} transactions ({r['percentage']}% of total spending)."
                 ),
                 metadata={
@@ -49,8 +49,8 @@ def build_fact_cards(tools: FinanceTools, max_months: int = 6) -> List[Document]
         docs.append(
             Document(
                 page_content=(
-                    f"Month {m}: total expenses {ms['total_expenses']:.2f} UAH, "
-                    f"income {ms['total_income']:.2f} UAH, net {ms['net']:.2f} UAH. "
+                    f"Month {m}: total expenses {ms['total_expenses']:.2f} USD, "
+                    f"income {ms['total_income']:.2f} USD, net {ms['net']:.2f} USD. "
                     f"Top categories: {top}."
                 ),
                 metadata={"kind": "monthly_summary", "month": m, "label": f"Summary {m}"},
@@ -60,7 +60,7 @@ def build_fact_cards(tools: FinanceTools, max_months: int = 6) -> List[Document]
             docs.append(
                 Document(
                     page_content=(
-                        f"In {m}, spending on {c['category']} was {c['total']:.2f} UAH "
+                        f"In {m}, spending on {c['category']} was {c['total']:.2f} USD "
                         f"over {c['count']} transactions ({c['percentage']}% of that month)."
                     ),
                     metadata={
@@ -81,7 +81,7 @@ def build_fact_cards(tools: FinanceTools, max_months: int = 6) -> List[Document]
             docs.append(
                 Document(
                     page_content=(
-                        f"Forecast for {fmonth}: {cat} predicted at {d['predicted_amount']:.2f} UAH "
+                        f"Forecast for {fmonth}: {cat} predicted at {d['predicted_amount']:.2f} USD "
                         f"(range {d['confidence_interval_low']:.0f}-{d['confidence_interval_high']:.0f}, "
                         f"trend {d['trend']})."
                     ),

@@ -20,7 +20,7 @@ class ChatRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "message": "is mahine groceries pe kitna gaya?",
+                "message": "How much did I spend on groceries this month?",
                 "conversation_id": "user-42",
             }
         }

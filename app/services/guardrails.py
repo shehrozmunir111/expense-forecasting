@@ -30,10 +30,10 @@ _INJECTION_PATTERNS = [
 # A few finance words; absence is a soft off-topic flag (never a hard block).
 _FINANCE_HINTS = [
     "spend", "spent", "spending", "expense", "expenses", "budget", "cost", "paid",
-    "category", "categories", "forecast", "month", "groceries", "fuel", "car",
-    "dining", "utilities", "transport", "shopping", "subscription", "income",
-    "transaction", "uah", "total", "save", "saving", "money", "kitna", "kharch",
-    "kitne", "mahine", "mahina",
+    "category", "categories", "forecast", "month", "housing", "transportation",
+    "dining", "food", "utilities", "insurance", "healthcare", "entertainment",
+    "shopping", "education", "travel", "subscriptions", "salary", "freelance",
+    "investment", "income", "transaction", "total", "save", "saving", "money",
 ]
 
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")

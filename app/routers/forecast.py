@@ -38,7 +38,7 @@ def get_forecast(db: Session = Depends(get_db)):
         CategoryForecast(
             category=cat,
             predicted_amount=data["predicted_amount"],
-            currency="UAH",
+            currency="USD",
             confidence_interval_low=data["confidence_interval_low"],
             confidence_interval_high=data["confidence_interval_high"],
             trend=data["trend"],
@@ -51,7 +51,7 @@ def get_forecast(db: Session = Depends(get_db)):
     return ForecastResponse(
         forecast_month=result["forecast_month"],
         total_predicted=total,
-        currency="UAH",
+        currency="USD",
         categories=sorted(categories, key=lambda x: -x.predicted_amount),
         model_info=result["model_info"],
         months_of_history=result["months_of_history"],

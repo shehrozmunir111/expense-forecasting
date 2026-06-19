@@ -13,17 +13,22 @@ class CategorizationStatus:
 
 
 EXPENSE_CATEGORIES = [
-    "Groceries",
-    "Car/Fuel",
-    "Entertainment",
+    "Housing",
+    "Transportation",
+    "Food & Dining",
     "Utilities",
+    "Insurance",
     "Healthcare",
-    "Transport",
+    "Entertainment",
     "Shopping",
-    "Dining",
     "Education",
-    "Subscription",
-    "Other",
+    "Travel",
+    "Subscriptions",
+    "Salary",
+    "Freelance",
+    "Investment",
+    "Other Income",
+    "Other Expense",
 ]
 
 
@@ -33,7 +38,7 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     raw_text = Column(String(500), nullable=False)
     amount = Column(Numeric(12, 2, asdecimal=False), nullable=False)
-    currency = Column(String(10), default="UAH")
+    currency = Column(String(10), default="USD")
     date = Column(Date, nullable=False, index=True)
 
     # Categorization

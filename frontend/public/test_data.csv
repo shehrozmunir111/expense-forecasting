@@ -1,0 +1,76 @@
+raw_text,amount,currency,date,category,is_income
+Monthly apartment rent,8500,USD,2026-04-01,Housing,False
+Electric bill payment,850,USD,2026-04-03,Utilities,False
+Water supply bill,320,USD,2026-04-03,Utilities,False
+Kyivstar internet,450,USD,2026-04-05,Utilities,False
+Silpo groceries weekly,3200,USD,2026-04-06,Food & Dining,False
+Metro monthly pass,600,USD,2026-04-01,Transportation,False
+Shell gas station,1500,USD,2026-04-08,Transportation,False
+Netflix subscription,499,USD,2026-04-09,Subscriptions,False
+Spotify subscription,150,USD,2026-04-09,Subscriptions,False
+Gym membership fee,600,USD,2026-04-01,Healthcare,False
+Pharmacy medicine,450,USD,2026-04-11,Healthcare,False
+Amazon electronics,2100,USD,2026-04-02,Shopping,False
+Clothing store purchase,1800,USD,2026-04-12,Shopping,False
+Car insurance monthly,2200,USD,2026-04-01,Insurance,False
+Health insurance,1500,USD,2026-04-01,Insurance,False
+Restaurant dinner out,1200,USD,2026-04-15,Food & Dining,False
+Movie tickets cinema,400,USD,2026-04-16,Entertainment,False
+Concert tickets show,1500,USD,2026-04-19,Entertainment,False
+Online course platform,2500,USD,2026-04-14,Education,False
+Programming books,1200,USD,2026-04-18,Education,False
+Weekend trip hotel,4500,USD,2026-04-22,Travel,False
+Flight tickets booking,8500,USD,2026-04-22,Travel,False
+Freelance project payment,18000,USD,2026-04-15,Freelance,True
+Monthly salary payment,35000,USD,2026-04-01,Salary,True
+Stock dividend payout,1500,USD,2026-04-10,Investment,True
+Monthly apartment rent,8500,USD,2026-05-01,Housing,False
+Electric bill high,920,USD,2026-05-03,Utilities,False
+Water bill may,310,USD,2026-05-03,Utilities,False
+Internet subscription,450,USD,2026-05-05,Utilities,False
+Carrefour groceries bulk,3500,USD,2026-05-06,Food & Dining,False
+Metro monthly pass,600,USD,2026-05-01,Transportation,False
+WOG gas station fuel,1600,USD,2026-05-09,Transportation,False
+Netflix subscription,499,USD,2026-05-10,Subscriptions,False
+Spotify subscription,150,USD,2026-05-10,Subscriptions,False
+Gym membership fee,600,USD,2026-05-01,Healthcare,False
+Dental checkup clinic,1200,USD,2026-05-11,Healthcare,False
+New laptop purchase,15000,USD,2026-05-14,Shopping,False
+Home decor items,2300,USD,2026-05-16,Shopping,False
+Car insurance,2200,USD,2026-05-01,Insurance,False
+BBQ grill restaurant,1800,USD,2026-05-18,Food & Dining,False
+Brewery visit friends,650,USD,2026-05-20,Entertainment,False
+Gaming subscription,300,USD,2026-05-10,Entertainment,False
+Language course fee,1800,USD,2026-05-14,Education,False
+Weekend getaway trip,3200,USD,2026-05-22,Travel,False
+Uber rides total,450,USD,2026-05-23,Transportation,False
+Hotel reservation,2800,USD,2026-05-25,Travel,False
+Freelance project payment,22000,USD,2026-05-15,Freelance,True
+Monthly salary payment,35000,USD,2026-05-01,Salary,True
+Freelance bonus extra,5000,USD,2026-05-20,Freelance,True
+Monthly apartment rent,8500,USD,2026-06-01,Housing,False
+Electric bill summer,780,USD,2026-06-03,Utilities,False
+Water bill june,290,USD,2026-06-03,Utilities,False
+Internet subscription,450,USD,2026-06-05,Utilities,False
+ATB groceries weekly,2800,USD,2026-06-06,Food & Dining,False
+Metro monthly pass,600,USD,2026-06-01,Transportation,False
+OKKO gas station fuel,1400,USD,2026-06-09,Transportation,False
+Netflix subscription,499,USD,2026-06-10,Subscriptions,False
+Spotify subscription,150,USD,2026-06-10,Subscriptions,False
+Gym membership fee,600,USD,2026-06-01,Healthcare,False
+Eye exam glasses,2500,USD,2026-06-11,Healthcare,False
+Summer clothing mall,3500,USD,2026-06-14,Shopping,False
+Garden supplies shop,1200,USD,2026-06-16,Shopping,False
+Car insurance monthly,2200,USD,2026-06-01,Insurance,False
+Pizza restaurant dinner,1400,USD,2026-06-18,Food & Dining,False
+Amusement park tickets,3200,USD,2026-06-20,Entertainment,False
+Summer course program,2000,USD,2026-06-14,Education,False
+Beach vacation hotel,6000,USD,2026-06-24,Travel,False
+Flights to beach,9500,USD,2026-06-24,Travel,False
+Car rental for trip,4500,USD,2026-06-24,Transportation,False
+Taxi to airport,350,USD,2026-06-24,Transportation,False
+Life insurance payment,1800,USD,2026-06-01,Insurance,False
+Freelance project payment,25000,USD,2026-06-15,Freelance,True
+Monthly salary payment,35000,USD,2026-06-01,Salary,True
+Part-time teaching income,8000,USD,2026-06-10,Salary,True
+Investment return profit,2500,USD,2026-06-20,Investment,True

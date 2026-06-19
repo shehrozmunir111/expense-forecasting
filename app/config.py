@@ -4,8 +4,8 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Application
-    APP_NAME: str = "Expense Forecasting API"
-    APP_VERSION: str = "1.0.0"
+    APP_NAME: str = "FinanceFlow"
+    APP_VERSION: str = "2.0.5"
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 

@@ -61,13 +61,13 @@ from app.models.expense import Expense
 from app.repositories.expense_repo import ExpenseRepository
 from app.services.finance_tools import FinanceTools
 
-# Groceries: Jan 800 (500+300), Feb 700, Mar 200  -> all-time 1700
-# Car/Fuel:  Jan 1200, Feb 1100, Mar 1300          -> all-time 3600 (biggest)
-# Dining:    Jan 200, Feb 250, Mar 180             -> all-time 630
+# Food & Dining: Jan 800 (500+300), Feb 700, Mar 200  -> all-time 1700
+# Transportation: Jan 1200, Feb 1100, Mar 1300          -> all-time 3600 (biggest)
+# Healthcare:    Jan 200, Feb 250, Mar 180             -> all-time 630
 SEED_CATEGORIZED = {
-    "2024-01": {"Groceries": [500.0, 300.0], "Car/Fuel": [1200.0], "Dining": [200.0]},
-    "2024-02": {"Groceries": [700.0], "Car/Fuel": [1100.0], "Dining": [250.0]},
-    "2024-03": {"Groceries": [200.0], "Car/Fuel": [1300.0], "Dining": [180.0]},
+    "2024-01": {"Food & Dining": [500.0, 300.0], "Transportation": [1200.0], "Healthcare": [200.0]},
+    "2024-02": {"Food & Dining": [700.0], "Transportation": [1100.0], "Healthcare": [250.0]},
+    "2024-03": {"Food & Dining": [200.0], "Transportation": [1300.0], "Healthcare": [180.0]},
 }
 
 
@@ -78,7 +78,7 @@ def seed_categorized(session):
         for category, amounts in cats.items():
             for amt in amounts:
                 rows.append(Expense(
-                    raw_text=f"{category} tx", amount=amt, currency="UAH",
+                    raw_text=f"{category} tx", amount=amt, currency="USD",
                     date=date(year, mm, 10), category=category,
                     categorization_status="categorized",
                 ))

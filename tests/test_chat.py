@@ -36,12 +36,12 @@ from app.services.llm_provider import HashingEmbeddings
 # Fixtures / helpers                                                           #
 # --------------------------------------------------------------------------- #
 
-# Groceries: Jan 800 (500+300), Feb 700, Mar 200  -> all-time 1700
-# Car/Fuel:  Jan 1200, Feb 1100, Mar 1300          -> all-time 3600
+# Food & Dining: Jan 800 (500+300), Feb 700, Mar 200 -> all-time 1700
+# Transportation: Jan 1200, Feb 1100, Mar 1300 -> all-time 3600
 _SEED = {
-    "2024-01": {"Groceries": [500.0, 300.0], "Car/Fuel": [1200.0]},
-    "2024-02": {"Groceries": [700.0], "Car/Fuel": [1100.0]},
-    "2024-03": {"Groceries": [200.0], "Car/Fuel": [1300.0]},
+    "2024-01": {"Food & Dining": [500.0, 300.0], "Transportation": [1200.0]},
+    "2024-02": {"Food & Dining": [700.0], "Transportation": [1100.0]},
+    "2024-03": {"Food & Dining": [200.0], "Transportation": [1300.0]},
 }
 
 
@@ -55,7 +55,7 @@ def _seed(db):
                     Expense(
                         raw_text=f"{category} tx",
                         amount=amt,
-                        currency="UAH",
+                        currency="USD",
                         date=date(year, mm, 10),
                         category=category,
                         categorization_status="categorized",
@@ -110,12 +110,12 @@ class BoomLLM(FakeListChatModel):
 # --------------------------------------------------------------------------- #
 
 def test_finance_tools_numbers_match_services(tools):
-    assert tools.category_total("Groceries", "2024-01")["total"] == 800.0
-    assert tools.category_total("Car/Fuel", "2024-02")["total"] == 1100.0
+    assert tools.category_total("Food & Dining", "2024-01")["total"] == 800.0
+    assert tools.category_total("Transportation", "2024-02")["total"] == 1100.0
 
     all_time = {r["category"]: r["total"] for r in tools.category_summary()}
-    assert all_time["Groceries"] == 1700.0
-    assert all_time["Car/Fuel"] == 3600.0
+    assert all_time["Food & Dining"] == 1700.0
+    assert all_time["Transportation"] == 3600.0
 
     jan = tools.monthly_summary("2024-01")
     assert jan["total_expenses"] == 2000.0  # 800 + 1200
@@ -126,7 +126,7 @@ def test_fact_cards_embed_real_numbers(tools):
     cards = build_fact_cards(tools)
     texts = [c.page_content for c in cards]
     # The Jan groceries figure (800.00) appears verbatim, sourced from services.
-    assert any("800.00" in t and "Groceries" in t and "2024-01" in t for t in texts)
+    assert any("800.00" in t and "Food & Dining" in t and "2024-01" in t for t in texts)
     # Forecast cards exist (>= 2 months of history were trained).
     assert any(c.metadata.get("kind") == "forecast" for c in cards)
 
@@ -138,9 +138,9 @@ def test_fact_cards_embed_real_numbers(tools):
 def test_retrieve_returns_relevant_docs(tools):
     retriever = FinanceRetriever(tools, embeddings=HashingEmbeddings(), k=4)
     try:
-        docs = retriever.retrieve("how much on groceries in January 2024")
+        docs = retriever.retrieve("how much on Food & Dining in January 2024")
         assert docs, "expected at least one retrieved fact card"
-        assert any("Groceries" in (d.metadata.get("category") or "") for d in docs)
+        assert any("Food & Dining" in (d.metadata.get("category") or "") for d in docs)
     finally:
         retriever.close()
 
@@ -169,7 +169,7 @@ def _grade_state(docs):
 
 def test_grade_useful(tools):
     node = ChatAgent._make_grade(fake_llm("USEFUL"))
-    out = node(_grade_state([{"kind": "x", "label": "l", "detail": "groceries 800 UAH"}]))
+    out = node(_grade_state([{"kind": "x", "label": "l", "detail": "groceries 800 USD"}]))
     assert out["grade"] == "useful"
 
 
@@ -196,13 +196,13 @@ def test_grade_without_llm_defaults_useful():
 
 def test_answer_is_grounded_and_has_sources(agent, tools):
     resp = agent.run(
-        "How much did I spend on groceries in January 2024?",
+        "How much did I spend on Food & Dining in January 2024?",
         "t-answer",
         tools,
-        llm=fake_llm("USEFUL", "You spent 800.00 UAH on groceries in January 2024."),
+        llm=fake_llm("USEFUL", "You spent 800.00 USD on Food & Dining in January 2024."),
         embeddings=HashingEmbeddings(),
     )
-    assert resp.answer == "You spent 800.00 UAH on groceries in January 2024."
+    assert resp.answer == "You spent 800.00 USD on Food & Dining in January 2024."
     assert resp.grounded is True
     assert resp.rewritten is False
     assert resp.sources, "answer should cite retrieved fact cards"
@@ -214,11 +214,11 @@ def test_weak_grade_triggers_rewrite(agent, tools):
         "and that one?",
         "t-rewrite",
         tools,
-        llm=fake_llm("WEAK", "groceries spending in 2024-01", "USEFUL", "It was 800.00 UAH."),
+        llm=fake_llm("WEAK", "Food & Dining spending in 2024-01", "USEFUL", "It was 800.00 USD."),
         embeddings=HashingEmbeddings(),
     )
     assert resp.rewritten is True
-    assert resp.answer == "It was 800.00 UAH."
+    assert resp.answer == "It was 800.00 USD."
 
 
 # --------------------------------------------------------------------------- #
@@ -227,9 +227,9 @@ def test_weak_grade_triggers_rewrite(agent, tools):
 
 def test_multi_turn_memory_persists(agent, tools):
     cid = "t-memory"
-    llm = fake_llm("USEFUL", "Jan groceries were 800.00 UAH.",
-                   "USEFUL", "Feb groceries were 700.00 UAH.")
-    agent.run("groceries in Jan 2024?", cid, tools, llm=llm, embeddings=HashingEmbeddings())
+    llm = fake_llm("USEFUL", "Jan Food & Dining were 800.00 USD.",
+                   "USEFUL", "Feb Food & Dining were 700.00 USD.")
+    agent.run("Food & Dining in Jan 2024?", cid, tools, llm=llm, embeddings=HashingEmbeddings())
     agent.run("and the next month?", cid, tools, llm=llm, embeddings=HashingEmbeddings())
 
     saved = agent._checkpointer.get({"configurable": {"thread_id": cid}})
@@ -237,13 +237,13 @@ def test_multi_turn_memory_persists(agent, tools):
     # 2 human + 2 ai messages accumulated across the two turns.
     assert len(messages) == 4
     human_texts = [m.content for m in messages if isinstance(m, HumanMessage)]
-    assert "groceries in Jan 2024?" in human_texts
+    assert "Food & Dining in Jan 2024?" in human_texts
     assert "and the next month?" in human_texts
 
 
 def test_separate_conversations_do_not_share_memory(agent, tools):
-    agent.run("groceries in Jan?", "conv-a", tools,
-              llm=fake_llm("USEFUL", "800 UAH"), embeddings=HashingEmbeddings())
+    agent.run("Food & Dining in Jan?", "conv-a", tools,
+              llm=fake_llm("USEFUL", "800 USD"), embeddings=HashingEmbeddings())
     other = agent._checkpointer.get({"configurable": {"thread_id": "conv-b"}})
     assert other is None  # conv-b was never used
 
@@ -254,7 +254,7 @@ def test_separate_conversations_do_not_share_memory(agent, tools):
 
 def test_fallback_when_llm_unreachable(agent, tools):
     resp = agent.run(
-        "How much on groceries in January 2024?",
+        "How much on Food & Dining in January 2024?",
         "t-fallback",
         tools,
         llm=BoomLLM(responses=["unused"]),
@@ -262,7 +262,7 @@ def test_fallback_when_llm_unreachable(agent, tools):
     )
     assert resp.grounded is False
     # Fallback still surfaces real, service-computed figures from the fact cards.
-    assert "UAH" in resp.answer
+    assert "USD" in resp.answer
     assert resp.sources
 
 
@@ -291,7 +291,7 @@ def test_chat_endpoint_offline(client, db, monkeypatch):
     _seed(db)
     monkeypatch.setattr(
         "app.services.chat_agent._safe_chat_model",
-        lambda streaming=False: fake_llm("USEFUL", "You spent 800.00 UAH on groceries in January 2024."),
+        lambda streaming=False: fake_llm("USEFUL", "You spent 800.00 USD on Food & Dining in January 2024."),
     )
     monkeypatch.setattr(
         "app.services.finance_retriever.get_embeddings",
@@ -299,12 +299,12 @@ def test_chat_endpoint_offline(client, db, monkeypatch):
     )
 
     r = client.post("/chat", json={
-        "message": "How much did I spend on groceries in January 2024?",
+        "message": "How much did I spend on Food & Dining in January 2024?",
         "conversation_id": "http-test-1",
     })
     assert r.status_code == 200
     body = r.json()
-    assert body["answer"] == "You spent 800.00 UAH on groceries in January 2024."
+    assert body["answer"] == "You spent 800.00 USD on Food & Dining in January 2024."
     assert body["conversation_id"] == "http-test-1"
     assert body["grounded"] is True
     assert len(body["sources"]) >= 1

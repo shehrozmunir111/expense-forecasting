@@ -67,17 +67,17 @@ def test_toolset_returns_correct_numbers(seeded_tools):
         "get_forecast", "get_monthly_summary", "list_months", "list_recent_transactions",
     }
     # Jan groceries == 800 (from services)
-    out = by_name["get_category_total"].invoke({"category": "Groceries", "month": "2024-01"})
+    out = by_name["get_category_total"].invoke({"category": "Food & Dining", "month": "2024-01"})
     assert "800.00" in out
-    # Biggest category == Car/Fuel 3600
+    # Biggest category == Transportation 3600
     biggest = by_name["get_biggest_category"].invoke({})
-    assert "Car/Fuel" in biggest and "3600.00" in biggest
+    assert "Transportation" in biggest and "3600.00" in biggest
 
 
 def test_sources_from_messages_extracts_tool_calls():
     msgs = [
         HumanMessage(content="q"),
-        ToolMessage(content="Car/Fuel: 3600.00 UAH", name="get_biggest_category", tool_call_id="x"),
+        ToolMessage(content="Transportation: 3600.00 USD", name="get_biggest_category", tool_call_id="x"),
         AIMessage(content="answer"),
     ]
     sources = _sources_from_messages(msgs)
@@ -98,7 +98,7 @@ def test_agent_calls_tool_and_grounds_answer(agent, seeded_tools):
         llm=FakeToolCallingModel(tool_name="get_biggest_category"),
     )
     assert resp.grounded is True
-    assert "Car/Fuel" in resp.answer and "3600.00" in resp.answer
+    assert "Transportation" in resp.answer and "3600.00" in resp.answer
     assert [s.label for s in resp.sources] == ["get_biggest_category"]
 
 
@@ -122,7 +122,7 @@ def test_agent_fallback_when_no_llm(agent, seeded_tools, monkeypatch):
                         lambda streaming=False: None)
     resp = agent.run("biggest category?", "ra-fb", seeded_tools)  # llm defaults -> None
     assert resp.grounded is False
-    assert "UAH" in resp.answer
+    assert "USD" in resp.answer
     assert resp.sources  # top categories surfaced from services
 
 
@@ -140,5 +140,5 @@ def test_agent_endpoint_offline(client, db, monkeypatch):
     r = client.post("/chat/agent", json={"message": "biggest category?", "conversation_id": "rae-1"})
     assert r.status_code == 200
     body = r.json()
-    assert "Car/Fuel" in body["answer"]
+    assert "Transportation" in body["answer"]
     assert body["grounded"] is True

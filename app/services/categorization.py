@@ -8,20 +8,27 @@ logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """You are a financial transaction categorizer.
 Classify each bank transaction into exactly one of these categories:
-Groceries, Car/Fuel, Entertainment, Utilities, Healthcare, Transport,
-Shopping, Dining, Education, Subscription, Other.
+Housing, Transportation, Food & Dining, Utilities, Insurance, Healthcare, Entertainment, Shopping, Education, Travel, Subscriptions, Salary, Freelance, Investment, Other Income, Other Expense.
 
 Rules:
-- Supermarkets, food shops (ATB, Silpo, Novus) - Groceries
-- Gas stations, parking (WOG, OKKO, Shell) - Car/Fuel
-- Taxis, Uber, Bolt, buses, metro - Transport
-- Pharmacies, hospitals - Healthcare
-- Netflix, Spotify, Apple, software - Subscription
-- Restaurants, cafes, food delivery - Dining
+- Supermarkets, food shops (ATB, Silpo, Novus), restaurants, cafes, food delivery - Food & Dining
+- Gas stations, parking (WOG, OKKO, Shell), taxis, Uber, Bolt, buses, metro - Transportation
+- Flights, hotel, Airbnb, car rental - Travel
 - Electricity, water, gas, internet, mobile - Utilities
+- Rent, apartment, housing, mortgage, property tax - Housing
+- Pharmacies, hospitals, gym, fitness - Healthcare
+- Netflix, Spotify, Apple, subscriptions, monthly fee - Subscriptions
+- Movie, cinema, theater, concert, game - Entertainment
+- Book, course, tutorial, class - Education
+- Insurance - Insurance
+- Salary - Salary
+- Freelance, gig, contract - Freelance
+- Dividend, stock, investment, crypto - Investment
+- Other income (if the transaction is an income and does not fit anywhere else) - Other Income
+- Other expense (if the transaction is an expense and does not fit anywhere else) - Other Expense
 
 Return ONLY a JSON array. No preamble, no markdown fences. Example:
-[{"id": 1, "category": "Groceries", "confidence": 0.95}]"""
+[{"id": 1, "category": "Food & Dining", "confidence": 0.95}]"""
 
 
 class CategorizationService:
@@ -74,46 +81,70 @@ class CategorizationService:
 
         raise ValueError(f"Unknown LLM_PROVIDER: {provider!r}")
 
-    def _parse_response(self, raw: str, fallback_ids: List[int]) -> List[Dict]:
+    def _parse_response(self, raw: str, fallback_transactions: List[Dict]) -> List[Dict]:
         raw = raw.strip()
         # Strip markdown fences if the model added them anyway
         if raw.startswith("```"):
             lines = raw.splitlines()
             raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
 
+        fallback_map = {t["id"]: t for t in fallback_transactions}
+
         try:
             data = json.loads(raw)
         except json.JSONDecodeError as e:
             logger.warning(f"JSON parse failed: {e}. Raw: {raw[:200]}")
-            return [{"id": i, "category": "Other", "confidence": 0.0} for i in fallback_ids]
+            return [
+                {
+                    "id": t["id"],
+                    "category": "Other Income" if t.get("is_income") else "Other Expense",
+                    "confidence": 0.0
+                }
+                for t in fallback_transactions
+            ]
 
         if not isinstance(data, list):
             logger.warning("LLM response was not a JSON array. Raw: %s", raw[:200])
-            return [{"id": i, "category": "Other", "confidence": 0.0} for i in fallback_ids]
+            return [
+                {
+                    "id": t["id"],
+                    "category": "Other Income" if t.get("is_income") else "Other Expense",
+                    "confidence": 0.0
+                }
+                for t in fallback_transactions
+            ]
 
         valid_set = set(EXPENSE_CATEGORIES)
-        fallback_id_set = set(fallback_ids)
         parsed_by_id: Dict[int, Dict] = {}
         for item in data:
-            if not isinstance(item, dict) or item.get("id") not in fallback_id_set:
+            if not isinstance(item, dict) or item.get("id") not in fallback_map:
                 continue
-            if item.get("category") not in valid_set:
-                item["category"] = "Other"
+            cat = item.get("category")
+            t = fallback_map[item["id"]]
+            if cat not in valid_set:
+                cat = "Other Income" if t.get("is_income") else "Other Expense"
             item["confidence"] = float(max(0.0, min(1.0, item.get("confidence", 0.5))))
             parsed_by_id[item["id"]] = {
                 "id": item["id"],
-                "category": item["category"],
+                "category": cat,
                 "confidence": item["confidence"],
             }
 
         return [
-            parsed_by_id.get(i, {"id": i, "category": "Other", "confidence": 0.0})
-            for i in fallback_ids
+            parsed_by_id.get(
+                t["id"],
+                {
+                    "id": t["id"],
+                    "category": "Other Income" if t.get("is_income") else "Other Expense",
+                    "confidence": 0.0
+                }
+            )
+            for t in fallback_transactions
         ]
 
     def categorize_batch(self, transactions: List[Dict]) -> List[Dict]:
         """
-        transactions: list of {id, raw_text, amount, currency}
+        transactions: list of {id, raw_text, amount, currency, is_income}
         returns:      list of {id, category, confidence}
         """
         if not transactions:
@@ -125,7 +156,8 @@ class CategorizationService:
                     "id": t["id"],
                     "text": t["raw_text"],
                     "amount": t.get("amount"),
-                    "currency": t.get("currency", "UAH"),
+                    "currency": t.get("currency", "USD"),
+                    "is_income": t.get("is_income", False),
                 }
                 for t in transactions
             ],
@@ -134,10 +166,17 @@ class CategorizationService:
 
         try:
             raw = self._call_llm(f"Categorize these transactions:\n{payload}")
-            return self._parse_response(raw, fallback_ids=[t["id"] for t in transactions])
+            return self._parse_response(raw, fallback_transactions=transactions)
         except Exception as exc:
             logger.error(f"LLM categorization error: {exc}")
-            return [{"id": t["id"], "category": "Other", "confidence": 0.0} for t in transactions]
+            return [
+                {
+                    "id": t["id"],
+                    "category": "Other Income" if t.get("is_income") else "Other Expense",
+                    "confidence": 0.0
+                }
+                for t in transactions
+            ]
 
     def categorize_all_pending(self, repo) -> Dict:
         """Process all PENDING expenses from the repository in batches."""
@@ -151,7 +190,13 @@ class CategorizationService:
                 break
 
             transactions = [
-                {"id": e.id, "raw_text": e.raw_text, "amount": e.amount, "currency": e.currency}
+                {
+                    "id": e.id,
+                    "raw_text": e.raw_text,
+                    "amount": e.amount,
+                    "currency": e.currency,
+                    "is_income": e.is_income
+                }
                 for e in pending
             ]
 

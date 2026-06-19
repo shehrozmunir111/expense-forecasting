@@ -18,11 +18,11 @@ def memory(tmp_path):
 
 
 def test_add_and_recall(memory):
-    memory.add("user-1", "User prefers to call Car/Fuel expenses 'gaadi kharcha'.")
+    memory.add("user-1", "User prefers to call Car/Fuel expenses 'car costs'.")
     memory.add("user-1", "User asked about groceries spending in January.")
     hits = memory.recall("user-1", "what did I call my car expenses?", k=2)
     assert hits
-    assert any("gaadi" in h for h in hits)
+    assert any("car" in h for h in hits)
 
 
 def test_recall_is_user_scoped(memory):
@@ -35,7 +35,7 @@ def test_recall_is_user_scoped(memory):
 
 def test_recall_text_formats_or_empty(memory):
     assert memory.recall_text("nobody", "anything") == ""
-    memory.add_turn("user-1", "How much on dining?", "You spent 250 UAH.")
+    memory.add_turn("user-1", "How much on dining?", "You spent 250 USD.")
     text = memory.recall_text("user-1", "dining")
     assert "earlier conversations" in text.lower()
     assert "250" in text
@@ -58,7 +58,7 @@ def test_chat_endpoint_stores_memory(client, db, tmp_path, monkeypatch):
     monkeypatch.setattr("app.routers.chat.long_term_memory", test_mem)
     monkeypatch.setattr(
         "app.services.chat_agent._safe_chat_model",
-        lambda streaming=False: FakeListChatModel(responses=["USEFUL", "You spent 800.00 UAH."]),
+        lambda streaming=False: FakeListChatModel(responses=["USEFUL", "You spent 800.00 USD."]),
     )
     monkeypatch.setattr("app.services.finance_retriever.get_embeddings", lambda: HashingEmbeddings())
 
