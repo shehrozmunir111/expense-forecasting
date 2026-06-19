@@ -13,7 +13,7 @@ AI powered personal finance platform. It categorizes expenses, forecasts next mo
 - **Tool calling ReAct agent**, a **multi agent supervisor** that auto routes each question, and **Human in the Loop** approval for any data change.
 - **Production RAG**: persistent vector index with fingerprint caching, reranking, and per user long term memory.
 - **Guardrails** (input injection/topic checks, output groundedness) plus an **AI evaluation harness** (groundedness, retrieval recall, LLM as judge).
-- **Provider agnostic LLM**: local LM Studio by default, or cloud OpenAI / Anthropic / Gemini. One factory, switch via `.env`.
+- **Provider agnostic LLM**: works with OpenAI, Anthropic, or Gemini, switchable from `.env`.
 - Solid core: LLM categorization, per category ML forecasting, summaries, a clean layered architecture, and SQLite or PostgreSQL.
 
 ## Tech Stack
@@ -21,7 +21,7 @@ AI powered personal finance platform. It categorizes expenses, forecasts next mo
 | Layer | Technology |
 |-------|------------|
 | Backend | FastAPI, SQLAlchemy 2.0, Pydantic v2, SQLite / PostgreSQL |
-| AI | LangGraph, LangChain (LCEL), Chroma, LM Studio / OpenAI / Anthropic |
+| AI | LangGraph, LangChain (LCEL), Chroma, OpenAI / Anthropic / Gemini |
 | ML | scikit-learn, pandas, joblib |
 | Frontend | React 18, TypeScript, Vite, Tailwind, TanStack Query, Recharts |
 | Tooling | Docker & Compose, pytest (105 tests) |
@@ -33,7 +33,7 @@ AI powered personal finance platform. It categorizes expenses, forecasts next mo
 ```powershell
 python -m venv .venv; .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-Copy-Item .env.example .env        # then set provider keys or the LM Studio URL
+Copy-Item .env.example .env        # then set your LLM provider key
 uvicorn app.main:app --reload --port 8000     # http://localhost:8000/docs
 ```
 
@@ -69,16 +69,16 @@ curl -X POST http://localhost:8000/chat \
 | Rebuild persistent RAG index | `POST /chat/reindex` |
 | Reranking, long term memory, guardrails | `RAG_RERANK`, `LONG_TERM_MEMORY`, `GUARDRAILS` |
 
-**LLM config** (`.env`) defaults to a local LM Studio server (OpenAI compatible, no cloud key):
+**LLM config** (`.env`). The assistant is provider agnostic. Pick a provider and model and set the key:
 
 ```env
-CHAT_LLM_PROVIDER=openai
-CHAT_LLM_MODEL=google/gemma-4-12b-qat
-LLM_BASE_URL=http://localhost:1234/v1
-EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+CHAT_LLM_PROVIDER=openai        # openai | anthropic | gemini
+CHAT_LLM_MODEL=gpt-4o-mini
+OPENAI_API_KEY=your_key_here
+EMBEDDING_MODEL=text-embedding-3-small
 ```
 
-To use the cloud, set `CHAT_LLM_PROVIDER` to `anthropic`, `gemini`, or `openai` with a real key and clear `LLM_BASE_URL`. See `.env.example` for all options.
+See `.env.example` for all options.
 
 ## Core API
 
