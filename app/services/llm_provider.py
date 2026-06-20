@@ -27,6 +27,16 @@ def get_chat_model(streaming: bool = False):
     """
     provider = (settings.CHAT_LLM_PROVIDER or "openai").lower()
 
+    if provider in ("claude_cli", "claude-cli", "claudecli"):
+        from app.services.claude_cli_model import ChatClaudeCLI
+
+        return ChatClaudeCLI(
+            model=settings.CLAUDE_CLI_MODEL,
+            command=settings.CLAUDE_CLI_COMMAND,
+            disable_thinking=settings.CLAUDE_CLI_DISABLE_THINKING,
+            timeout=settings.CHAT_LLM_TIMEOUT,
+        )
+
     if provider in ("openai", "lmstudio", "lm_studio"):
         from langchain_openai import ChatOpenAI
 

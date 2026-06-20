@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     CHAT_LLM_TIMEOUT: int = 60  # seconds per LLM call; raise for slow local models
     GEMINI_API_KEY: Optional[str] = None
 
+    # claude_cli provider: use the local Claude Code CLI as the LLM (no API key,
+    # no cost). Works only where `claude` is installed + logged in (local machine,
+    # NOT a headless server). Set CHAT_LLM_PROVIDER=claude_cli to enable.
+    CLAUDE_CLI_COMMAND: str = "claude"
+    CLAUDE_CLI_MODEL: str = "haiku"
+    CLAUDE_CLI_DISABLE_THINKING: bool = True
+
     # Embeddings for retrieval (Chroma)
     EMBEDDING_PROVIDER: str = "openai"  # "openai" (incl. LM Studio) | "local"
     EMBEDDING_MODEL: str = "text-embedding-nomic-embed-text-v1.5"
