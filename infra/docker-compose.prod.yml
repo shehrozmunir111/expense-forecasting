@@ -28,6 +28,9 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - default
+      - webproxy
     depends_on:
       - api
 
@@ -86,3 +89,9 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+
+# Shared proxy network: the HealthPA Caddy (which owns :443) reaches this app's
+# web container over it to terminate HTTPS for the expense domain.
+networks:
+  webproxy:
+    external: true
