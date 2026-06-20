@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from typing import List, Optional
 import calendar
 from datetime import date
@@ -89,18 +89,10 @@ class ExpenseRepository:
         month: Optional[str] = None,  # YYYY-MM
         is_income: Optional[bool] = None,
         status: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> List[Expense]:
         q = self.db.query(Expense)
-        if category:
-            q = q.filter(Expense.category == category)
-        if month:
-            start, end = self._month_bounds(month)
-            q = q.filter(Expense.date >= start)
-            q = q.filter(Expense.date <= end)
-        if is_income is not None:
-            q = q.filter(Expense.is_income == is_income)
-        if status:
-            q = q.filter(Expense.categorization_status == status)
+        q = self._apply_filters(q, category, month, is_income, status, search)
         return q.order_by(Expense.date.desc()).offset(skip).limit(limit).all()
 
     def count(
@@ -109,8 +101,14 @@ class ExpenseRepository:
         month: Optional[str] = None,
         is_income: Optional[bool] = None,
         status: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> int:
         q = self.db.query(func.count(Expense.id))
+        q = self._apply_filters(q, category, month, is_income, status, search)
+        return q.scalar() or 0
+
+    def _apply_filters(self, q, category, month, is_income, status, search):
+        """Shared filters for get_all and count (keeps the two in sync)."""
         if category:
             q = q.filter(Expense.category == category)
         if month:
@@ -121,7 +119,15 @@ class ExpenseRepository:
             q = q.filter(Expense.is_income == is_income)
         if status:
             q = q.filter(Expense.categorization_status == status)
-        return q.scalar() or 0
+        if search:
+            like = f"%{search.strip()}%"
+            q = q.filter(or_(
+                Expense.raw_text.ilike(like),
+                Expense.notes.ilike(like),
+                Expense.category.ilike(like),
+                Expense.source.ilike(like),
+            ))
+        return q
 
     def get_pending_categorization(self, limit: int = 100) -> List[Expense]:
         return (

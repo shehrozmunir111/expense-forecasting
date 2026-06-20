@@ -115,11 +115,12 @@ def list_expenses(
     month: MonthQuery = None,
     is_income: Optional[bool] = None,
     status: StatusQuery = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     repo = ExpenseRepository(db)
-    items = repo.get_all(skip=skip, limit=limit, category=category, month=month, is_income=is_income, status=status)
-    total = repo.count(category=category, month=month, is_income=is_income, status=status)
+    items = repo.get_all(skip=skip, limit=limit, category=category, month=month, is_income=is_income, status=status, search=search)
+    total = repo.count(category=category, month=month, is_income=is_income, status=status, search=search)
     return PaginatedExpenses(items=items, total=total, skip=skip, limit=limit)
 
 
