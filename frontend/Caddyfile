@@ -1,7 +1,7 @@
 # The backend routes live at the root (/expenses, /forecast, /chat, /health),
 # so we strip the /api prefix before proxying: /api/expenses -> /expenses.
-# DOMAIN unset => plain HTTP on :80 (mapped to host :8080).
-{$DOMAIN::80} {
+# Plain HTTP on :80 inside the container, mapped to host :8080.
+:80 {
 	encode gzip
 
 	handle_path /api/* {
