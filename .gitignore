@@ -8,6 +8,13 @@ data/
 *.json
 !scripts/
 !app/eval/questions.json
+# Frontend config is JSON and must be tracked (the broad *.json rule hides it)
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/tsconfig.json
+!frontend/tsconfig.app.json
+!frontend/tsconfig.node.json
+!frontend/public/test_data.json
 
 # Local debug / throwaway scripts (keep out of the repo)
 scripts/check_data.py

@@ -1,0 +1,602 @@
+[
+  {
+    "raw_text": "Monthly apartment rent",
+    "amount": 8500,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Housing",
+    "is_income": false
+  },
+  {
+    "raw_text": "Electric bill payment",
+    "amount": 850,
+    "currency": "USD",
+    "date": "2026-04-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Water supply bill",
+    "amount": 320,
+    "currency": "USD",
+    "date": "2026-04-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Kyivstar internet",
+    "amount": 450,
+    "currency": "USD",
+    "date": "2026-04-05",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Silpo groceries weekly",
+    "amount": 3200,
+    "currency": "USD",
+    "date": "2026-04-06",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Metro monthly pass",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Shell gas station",
+    "amount": 1500,
+    "currency": "USD",
+    "date": "2026-04-08",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Netflix subscription",
+    "amount": 499,
+    "currency": "USD",
+    "date": "2026-04-09",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Spotify subscription",
+    "amount": 150,
+    "currency": "USD",
+    "date": "2026-04-09",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Gym membership fee",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "Pharmacy medicine",
+    "amount": 450,
+    "currency": "USD",
+    "date": "2026-04-11",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "Amazon electronics",
+    "amount": 2100,
+    "currency": "USD",
+    "date": "2026-04-02",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Clothing store purchase",
+    "amount": 1800,
+    "currency": "USD",
+    "date": "2026-04-12",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Car insurance monthly",
+    "amount": 2200,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Insurance",
+    "is_income": false
+  },
+  {
+    "raw_text": "Health insurance",
+    "amount": 1500,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Insurance",
+    "is_income": false
+  },
+  {
+    "raw_text": "Restaurant dinner out",
+    "amount": 1200,
+    "currency": "USD",
+    "date": "2026-04-15",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Movie tickets cinema",
+    "amount": 400,
+    "currency": "USD",
+    "date": "2026-04-16",
+    "category": "Entertainment",
+    "is_income": false
+  },
+  {
+    "raw_text": "Concert tickets show",
+    "amount": 1500,
+    "currency": "USD",
+    "date": "2026-04-19",
+    "category": "Entertainment",
+    "is_income": false
+  },
+  {
+    "raw_text": "Online course platform",
+    "amount": 2500,
+    "currency": "USD",
+    "date": "2026-04-14",
+    "category": "Education",
+    "is_income": false
+  },
+  {
+    "raw_text": "Programming books",
+    "amount": 1200,
+    "currency": "USD",
+    "date": "2026-04-18",
+    "category": "Education",
+    "is_income": false
+  },
+  {
+    "raw_text": "Weekend trip hotel",
+    "amount": 4500,
+    "currency": "USD",
+    "date": "2026-04-22",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Flight tickets booking",
+    "amount": 8500,
+    "currency": "USD",
+    "date": "2026-04-22",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Freelance project payment",
+    "amount": 18000,
+    "currency": "USD",
+    "date": "2026-04-15",
+    "category": "Freelance",
+    "is_income": true
+  },
+  {
+    "raw_text": "Monthly salary payment",
+    "amount": 35000,
+    "currency": "USD",
+    "date": "2026-04-01",
+    "category": "Salary",
+    "is_income": true
+  },
+  {
+    "raw_text": "Stock dividend payout",
+    "amount": 1500,
+    "currency": "USD",
+    "date": "2026-04-10",
+    "category": "Investment",
+    "is_income": true
+  },
+  {
+    "raw_text": "Monthly apartment rent",
+    "amount": 8500,
+    "currency": "USD",
+    "date": "2026-05-01",
+    "category": "Housing",
+    "is_income": false
+  },
+  {
+    "raw_text": "Electric bill high",
+    "amount": 920,
+    "currency": "USD",
+    "date": "2026-05-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Water bill may",
+    "amount": 310,
+    "currency": "USD",
+    "date": "2026-05-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Internet subscription",
+    "amount": 450,
+    "currency": "USD",
+    "date": "2026-05-05",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Carrefour groceries bulk",
+    "amount": 3500,
+    "currency": "USD",
+    "date": "2026-05-06",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Metro monthly pass",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-05-01",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "WOG gas station fuel",
+    "amount": 1600,
+    "currency": "USD",
+    "date": "2026-05-09",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Netflix subscription",
+    "amount": 499,
+    "currency": "USD",
+    "date": "2026-05-10",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Spotify subscription",
+    "amount": 150,
+    "currency": "USD",
+    "date": "2026-05-10",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Gym membership fee",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-05-01",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "Dental checkup clinic",
+    "amount": 1200,
+    "currency": "USD",
+    "date": "2026-05-11",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "New laptop purchase",
+    "amount": 15000,
+    "currency": "USD",
+    "date": "2026-05-14",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Home decor items",
+    "amount": 2300,
+    "currency": "USD",
+    "date": "2026-05-16",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Car insurance",
+    "amount": 2200,
+    "currency": "USD",
+    "date": "2026-05-01",
+    "category": "Insurance",
+    "is_income": false
+  },
+  {
+    "raw_text": "BBQ grill restaurant",
+    "amount": 1800,
+    "currency": "USD",
+    "date": "2026-05-18",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Brewery visit friends",
+    "amount": 650,
+    "currency": "USD",
+    "date": "2026-05-20",
+    "category": "Entertainment",
+    "is_income": false
+  },
+  {
+    "raw_text": "Gaming subscription",
+    "amount": 300,
+    "currency": "USD",
+    "date": "2026-05-10",
+    "category": "Entertainment",
+    "is_income": false
+  },
+  {
+    "raw_text": "Language course fee",
+    "amount": 1800,
+    "currency": "USD",
+    "date": "2026-05-14",
+    "category": "Education",
+    "is_income": false
+  },
+  {
+    "raw_text": "Weekend getaway trip",
+    "amount": 3200,
+    "currency": "USD",
+    "date": "2026-05-22",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Uber rides total",
+    "amount": 450,
+    "currency": "USD",
+    "date": "2026-05-23",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Hotel reservation",
+    "amount": 2800,
+    "currency": "USD",
+    "date": "2026-05-25",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Freelance project payment",
+    "amount": 22000,
+    "currency": "USD",
+    "date": "2026-05-15",
+    "category": "Freelance",
+    "is_income": true
+  },
+  {
+    "raw_text": "Monthly salary payment",
+    "amount": 35000,
+    "currency": "USD",
+    "date": "2026-05-01",
+    "category": "Salary",
+    "is_income": true
+  },
+  {
+    "raw_text": "Freelance bonus extra",
+    "amount": 5000,
+    "currency": "USD",
+    "date": "2026-05-20",
+    "category": "Freelance",
+    "is_income": true
+  },
+  {
+    "raw_text": "Monthly apartment rent",
+    "amount": 8500,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Housing",
+    "is_income": false
+  },
+  {
+    "raw_text": "Electric bill summer",
+    "amount": 780,
+    "currency": "USD",
+    "date": "2026-06-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Water bill june",
+    "amount": 290,
+    "currency": "USD",
+    "date": "2026-06-03",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "Internet subscription",
+    "amount": 450,
+    "currency": "USD",
+    "date": "2026-06-05",
+    "category": "Utilities",
+    "is_income": false
+  },
+  {
+    "raw_text": "ATB groceries weekly",
+    "amount": 2800,
+    "currency": "USD",
+    "date": "2026-06-06",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Metro monthly pass",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "OKKO gas station fuel",
+    "amount": 1400,
+    "currency": "USD",
+    "date": "2026-06-09",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Netflix subscription",
+    "amount": 499,
+    "currency": "USD",
+    "date": "2026-06-10",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Spotify subscription",
+    "amount": 150,
+    "currency": "USD",
+    "date": "2026-06-10",
+    "category": "Subscriptions",
+    "is_income": false
+  },
+  {
+    "raw_text": "Gym membership fee",
+    "amount": 600,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "Eye exam glasses",
+    "amount": 2500,
+    "currency": "USD",
+    "date": "2026-06-11",
+    "category": "Healthcare",
+    "is_income": false
+  },
+  {
+    "raw_text": "Summer clothing mall",
+    "amount": 3500,
+    "currency": "USD",
+    "date": "2026-06-14",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Garden supplies shop",
+    "amount": 1200,
+    "currency": "USD",
+    "date": "2026-06-16",
+    "category": "Shopping",
+    "is_income": false
+  },
+  {
+    "raw_text": "Car insurance monthly",
+    "amount": 2200,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Insurance",
+    "is_income": false
+  },
+  {
+    "raw_text": "Pizza restaurant dinner",
+    "amount": 1400,
+    "currency": "USD",
+    "date": "2026-06-18",
+    "category": "Food & Dining",
+    "is_income": false
+  },
+  {
+    "raw_text": "Amusement park tickets",
+    "amount": 3200,
+    "currency": "USD",
+    "date": "2026-06-20",
+    "category": "Entertainment",
+    "is_income": false
+  },
+  {
+    "raw_text": "Summer course program",
+    "amount": 2000,
+    "currency": "USD",
+    "date": "2026-06-14",
+    "category": "Education",
+    "is_income": false
+  },
+  {
+    "raw_text": "Beach vacation hotel",
+    "amount": 6000,
+    "currency": "USD",
+    "date": "2026-06-24",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Flights to beach",
+    "amount": 9500,
+    "currency": "USD",
+    "date": "2026-06-24",
+    "category": "Travel",
+    "is_income": false
+  },
+  {
+    "raw_text": "Car rental for trip",
+    "amount": 4500,
+    "currency": "USD",
+    "date": "2026-06-24",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Taxi to airport",
+    "amount": 350,
+    "currency": "USD",
+    "date": "2026-06-24",
+    "category": "Transportation",
+    "is_income": false
+  },
+  {
+    "raw_text": "Life insurance payment",
+    "amount": 1800,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Insurance",
+    "is_income": false
+  },
+  {
+    "raw_text": "Freelance project payment",
+    "amount": 25000,
+    "currency": "USD",
+    "date": "2026-06-15",
+    "category": "Freelance",
+    "is_income": true
+  },
+  {
+    "raw_text": "Monthly salary payment",
+    "amount": 35000,
+    "currency": "USD",
+    "date": "2026-06-01",
+    "category": "Salary",
+    "is_income": true
+  },
+  {
+    "raw_text": "Part-time teaching income",
+    "amount": 8000,
+    "currency": "USD",
+    "date": "2026-06-10",
+    "category": "Salary",
+    "is_income": true
+  },
+  {
+    "raw_text": "Investment return profit",
+    "amount": 2500,
+    "currency": "USD",
+    "date": "2026-06-20",
+    "category": "Investment",
+    "is_income": true
+  }
+]
