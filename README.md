@@ -1,105 +1,105 @@
 # FinanceFlow
 
-AI powered personal finance platform. It categorizes expenses, forecasts next month spending, and lets you **chat with your finances** in plain language. Built on FastAPI with a React dashboard, a LangGraph + RAG assistant, full test coverage, and Docker.
+An AI powered personal finance platform. It categorizes your expenses, forecasts next month spending, and lets you chat with your finances in plain language. Built on FastAPI with a React dashboard, a LangGraph and RAG assistant, full test coverage, and Docker.
+
+## Live demo
+
+| App | Link |
+|---|---|
+| FinanceFlow | https://expense.3-230-42-191.sslip.io |
+
+Open the dashboard to see six months of demo expenses, check the forecast for next month, search transactions (try "Spotify" or "Uber"), and ask the chat questions about your spending.
 
 <p align="center">
   <img src="assets/dashboard.png" alt="FinanceFlow dashboard" width="900">
 </p>
 
-## Highlights
+## What it does
 
-- **Chat with your finances.** Ask questions like "how much did I spend last month?" and get answers grounded in your own data, with citations and conversation memory.
-- **Adaptive RAG** (retrieve, grade, rewrite, answer) over fact cards built from deterministic services, so every figure matches the API and is never hallucinated.
-- **Tool calling ReAct agent**, a **multi agent supervisor** that auto routes each question, and **Human in the Loop** approval for any data change.
-- **Production RAG**: persistent vector index with fingerprint caching, reranking, and per user long term memory.
-- **Guardrails** (input injection/topic checks, output groundedness) plus an **AI evaluation harness** (groundedness, retrieval recall, LLM as judge).
-- **Provider agnostic LLM**: works with OpenAI, Anthropic, or Gemini, switchable from `.env`.
-- Solid core: LLM categorization, per category ML forecasting, summaries, a clean layered architecture, and SQLite or PostgreSQL.
+- **Chat with your finances.** Ask things like "how much did I spend last month?" and get answers grounded in your own data, with sources and conversation memory.
+- **Adaptive RAG.** Retrieve, grade, rewrite, answer over fact cards built from real services, so every number matches the API and is never made up.
+- **Agents.** A tool calling ReAct agent, a supervisor that routes each question on its own, and a human approval step for any data change.
+- **Production RAG.** A persistent vector index with caching, reranking, and per user long term memory.
+- **Guardrails.** Input and output checks, plus an evaluation harness (groundedness, retrieval recall, LLM as judge).
+- **Solid core.** LLM categorization, per category machine learning forecasting, summaries, a clean layered design, and SQLite or PostgreSQL.
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|------------|
-| Backend | FastAPI, SQLAlchemy 2.0, Pydantic v2, SQLite / PostgreSQL |
-| AI | LangGraph, LangChain (LCEL), Chroma, OpenAI / Anthropic / Gemini |
+|---|---|
+| Backend | FastAPI, SQLAlchemy 2.0, Pydantic v2, SQLite or PostgreSQL |
+| AI | LangGraph, LangChain, Chroma, Groq or OpenAI or Anthropic |
+| Background jobs | Celery and Redis (forecast training, bulk categorization) |
 | ML | scikit-learn, pandas, joblib |
 | Frontend | React 18, TypeScript, Vite, Tailwind, TanStack Query, Recharts |
-| Tooling | Docker & Compose, pytest (105 tests) |
+| Tooling | Docker and Compose, pytest |
 
-## Quick Start
+## Run it locally
 
-**Backend** (Python 3.11):
-
-```powershell
-python -m venv .venv; .\.venv\Scripts\Activate.ps1
+Backend (Python 3.11):
+```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-Copy-Item .env.example .env        # then set your LLM provider key
-uvicorn app.main:app --reload --port 8000     # http://localhost:8000/docs
+cp .env.example .env            # set your LLM provider key
+uvicorn app.main:app --reload   # http://localhost:8000/docs
 ```
 
-**Frontend**:
-
-```powershell
-cd frontend; npm install; npm run dev
+Frontend:
+```bash
+cd frontend && npm install && npm run dev
 ```
 
-**Docker** (SQLite by default; add `--profile pg` for PostgreSQL):
-
-```powershell
+Docker (SQLite by default; add `--profile pg` for PostgreSQL):
+```bash
 docker compose up --build
+```
+
+Seed demo data:
+```bash
+python scripts/seed_data.py --months 6 --url http://localhost:8000 --categorize
 ```
 
 ## The AI assistant
 
-A LangGraph agent answers questions about your own data. Numbers come from deterministic services (the same code behind `/expenses/summary/*` and `/forecast/`), so chat answers always match the API and the LLM only phrases them. Memory is keyed by `conversation_id`. If the LLM is unreachable, the agent falls back to a templated, fact grounded answer.
+A LangGraph agent answers questions about your own data. The numbers come from the same services behind `/expenses/summary/*` and `/forecast/`, so chat answers always match the API and the model only phrases them. Memory is keyed by `conversation_id`. If the model is unreachable, the agent falls back to a templated, fact grounded answer.
 
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "How much did I spend last month?", "conversation_id": "user-42"}'
-# { "answer": "You spent 48829.00 USD last month.", "sources": [...], "grounded": true }
 ```
 
-| Capability | Endpoint or setting |
-|------------|---------------------|
-| Adaptive RAG chat (plus streaming) | `POST /chat`, `POST /chat/stream` |
-| Tool calling ReAct agent | `POST /chat/agent` |
-| Multi agent auto routing | `POST /chat/supervisor` returns `routed_to` |
-| Human in the Loop write and approval | `POST /chat/action` then `POST /chat/approve` |
-| Rebuild persistent RAG index | `POST /chat/reindex` |
-| Reranking, long term memory, guardrails | `RAG_RERANK`, `LONG_TERM_MEMORY`, `GUARDRAILS` |
-
-**LLM config** (`.env`). The assistant is provider agnostic. Pick a provider and model and set the key:
-
+The assistant is provider agnostic. Set the provider, model, and key in `.env`:
 ```env
-CHAT_LLM_PROVIDER=openai        # openai | anthropic | gemini
+CHAT_LLM_PROVIDER=openai        # openai (also Groq via base url), anthropic, gemini
 CHAT_LLM_MODEL=gpt-4o-mini
 OPENAI_API_KEY=your_key_here
-EMBEDDING_MODEL=text-embedding-3-small
 ```
-
-See `.env.example` for all options.
 
 ## Core API
 
 | Method | Path | Description |
-|--------|------|-------------|
+|---|---|---|
 | `POST` | `/expenses/upload` | Bulk upload expenses or income (optional auto categorize) |
-| `GET` | `/expenses/`, `/expenses/summary/by-category`, `/expenses/summary/monthly` | List and summaries |
+| `GET` | `/expenses/` | List and search (filters: category, month, search) |
+| `GET` | `/expenses/summary/by-category`, `/expenses/summary/monthly` | Summaries |
 | `POST` | `/expenses/categorize/run` | LLM categorization |
-| `GET` | `/forecast/`, `POST /forecast/train` | Next month per category forecast |
-| `POST` | `/chat*` | Conversational assistant (see above) |
+| `GET` | `/forecast/` | Next month forecast per category |
+| `POST` | `/forecast/train`, `/forecast/train/async` | Train the model (sync or background) |
+| `POST` | `/chat` | Conversational assistant |
 
 Full interactive docs at `/docs`.
 
-## Evaluation and Tests
+## Background jobs
 
-```powershell
-python -m pytest -q          # 105 passed, fully offline (LLM mocked)
-python scripts/evaluate.py   # groundedness, retrieval recall, LLM as judge
-python scripts/verify_chat.py  # live multi turn demo (memory and numeric correctness)
+Celery runs the slow work off the request: forecast model training and bulk LLM categorization. A nightly beat job retrains the model so forecasts stay fresh.
+
+## Deployment
+
+Deployed on AWS with Terraform (shared EC2 host, managed RDS, secrets in SSM, free HTTPS via Caddy and Let's Encrypt). The infrastructure code lives in a separate `infra-deploy` repository.
+
+## Tests
+
+```bash
+python -m pytest -q          # fully offline (LLM mocked)
 ```
-
-## Architecture
-
-Layered: routers, services, repositories, ml and models. The AI lives in `app/services/` (`chat_agent`, `finance_agent`, `action_agent`, `supervisor`, `rag_index`, `reranker`, `long_term_memory`, `guardrails`, `llm_provider`), with deterministic `finance_tools` as the single source of truth for every figure.
