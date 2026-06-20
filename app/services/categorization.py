@@ -51,7 +51,12 @@ class CategorizationService:
             key = settings.OPENAI_API_KEY
             if not key:
                 raise ValueError("OPENAI_API_KEY is not set in environment")
-            self._openai_client = openai.OpenAI(api_key=key)
+            # base_url lets this drive any OpenAI-compatible endpoint
+            # (LM Studio locally, or Groq's /openai/v1 in the cloud).
+            self._openai_client = openai.OpenAI(
+                api_key=key,
+                base_url=settings.LLM_BASE_URL or None,
+            )
         return self._openai_client
 
     def _call_llm(self, user_message: str) -> str:
@@ -70,7 +75,7 @@ class CategorizationService:
         elif provider == "openai":
             client = self._get_openai()
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=settings.LLM_MODEL or "gpt-4o-mini",
                 max_tokens=settings.LLM_MAX_TOKENS,
                 messages=[
                     {"role": "system", "content": _SYSTEM_PROMPT},
