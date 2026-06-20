@@ -6,6 +6,10 @@ uvicorn[standard]==0.30.1
 sqlalchemy==2.0.30
 psycopg[binary]==3.2.9
 
+# Background jobs (forecast training + bulk categorization)
+celery==5.4.0
+redis==5.0.8
+
 # Config & validation
 pydantic==2.7.4
 pydantic-settings==2.3.4

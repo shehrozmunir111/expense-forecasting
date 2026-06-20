@@ -8,6 +8,7 @@ from app.database import get_db, SessionLocal
 from app.models.expense import CategorizationStatus
 from app.repositories.expense_repo import ExpenseRepository
 from app.services.categorization import CategorizationService
+from app.tasks.jobs import categorize_pending_task
 from app.schemas.expense import (
     ExpenseBulkUpload,
     BulkUploadResponse,
@@ -85,7 +86,13 @@ def upload_expenses(
 
     cat_status = "skipped"
     if payload.auto_categorize:
-        background_tasks.add_task(_bg_categorize)
+        # Prefer Celery (durable, survives request). Fall back to an in-process
+        # background task if the broker is unreachable (e.g. local dev w/o Redis).
+        try:
+            categorize_pending_task.delay()
+        except Exception:
+            logger.warning("Celery enqueue failed; using in-process fallback")
+            background_tasks.add_task(_bg_categorize)
         cat_status = "queued"
 
     return BulkUploadResponse(

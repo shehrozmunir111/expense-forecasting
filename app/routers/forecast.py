@@ -5,6 +5,7 @@ from datetime import datetime
 from app.database import get_db
 from app.repositories.expense_repo import ExpenseRepository
 from app.services.forecasting import forecasting_service
+from app.tasks.jobs import train_forecast_task
 from app.schemas.forecast import (
     ForecastResponse,
     TrainResponse,
@@ -68,6 +69,17 @@ def retrain_model(db: Session = Depends(get_db)):
     repo = ExpenseRepository(db)
     result = forecasting_service.retrain(repo)
     return TrainResponse(**result)
+
+
+@router.post("/train/async", status_code=202)
+def retrain_model_async():
+    """
+    Queue model (re)training as a background Celery job and return immediately.
+    Use for large datasets where synchronous /train would block the request.
+    Poll GET /tasks/{task_id} for status.
+    """
+    task = train_forecast_task.delay()
+    return {"task_id": task.id, "status": "queued"}
 
 
 @router.get("/model-info", response_model=ModelInfoResponse)

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # Database - SQLite for MVP; swap to PostgreSQL URL for production
     DATABASE_URL: str = "sqlite:///./data/expenses.db"
 
+    # Redis / Celery broker + result backend (background jobs)
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     # LLM Provider
     LLM_PROVIDER: str = "anthropic"  # "anthropic" | "openai"
     ANTHROPIC_API_KEY: Optional[str] = None

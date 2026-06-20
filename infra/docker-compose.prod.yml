@@ -1,0 +1,84 @@
+# Production stack for expense-forecasting, co-hosted on the same EC2 box as HealthPA.
+# Published on host port 8080 (HealthPA owns 80/443).
+#
+#   - api / celery_worker / celery_beat share one named volume so the worker's
+#     trained model + Chroma index are visible to the API.
+#   - PostgreSQL is the shared RDS instance (DATABASE_URL in .env, a separate
+#     `expense_db` database); Redis is a local container (broker + result backend).
+#
+# Run from the repo root:  docker compose -f infra/docker-compose.prod.yml up -d --build
+
+services:
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: expense-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - DOMAIN=${EXPENSE_DOMAIN:-}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: expense-api
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    expose:
+      - "8000"
+    volumes:
+      - expense_data:/app/data
+    depends_on:
+      - redis
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+
+  celery_worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: expense-celery
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - expense_data:/app/data
+    depends_on:
+      - redis
+    # concurrency=1 keeps memory low on the shared t3.micro
+    command: celery -A app.core.celery_app worker --concurrency=1 --loglevel=info
+
+  celery_beat:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: expense-celery-beat
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+    command: celery -A app.core.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+
+  redis:
+    image: redis:7-alpine
+    container_name: expense-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+volumes:
+  expense_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
