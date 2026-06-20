@@ -8,6 +8,10 @@
 #
 # Run from the repo root:  docker compose -f infra/docker-compose.prod.yml up -d --build
 
+# Explicit project name so this stack stays separate from the co-hosted
+# HealthPA app (both compose files live in a folder named "infra").
+name: expense
+
 services:
   web:
     build:
