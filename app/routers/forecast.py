@@ -18,11 +18,7 @@ router = APIRouter(prefix="/forecast", tags=["Forecast"])
 
 @router.get("/", response_model=ForecastResponse)
 def get_forecast(db: Session = Depends(get_db)):
-    """
-    Predict next month's expenses per category.
-    Requires -2 months of categorized expense history.
-    Automatically trains the model if not yet trained.
-    """
+    """Predict next month's expenses per category (auto-trains if needed; requires ~2 months of history)."""
     repo = ExpenseRepository(db)
     result = forecasting_service.predict(repo)
 
@@ -62,10 +58,7 @@ def get_forecast(db: Session = Depends(get_db)):
 
 @router.post("/train", response_model=TrainResponse)
 def retrain_model(db: Session = Depends(get_db)):
-    """
-    (Re)train the forecasting model on current categorized data.
-    Call this after bulk-categorizing a new month of data.
-    """
+    """(Re)train the forecasting model on current categorized data."""
     repo = ExpenseRepository(db)
     result = forecasting_service.retrain(repo)
     return TrainResponse(**result)
@@ -73,11 +66,7 @@ def retrain_model(db: Session = Depends(get_db)):
 
 @router.post("/train/async", status_code=202)
 def retrain_model_async():
-    """
-    Queue model (re)training as a background Celery job and return immediately.
-    Use for large datasets where synchronous /train would block the request.
-    Poll GET /tasks/{task_id} for status.
-    """
+    """Queue model (re)training as a background Celery job; poll GET /tasks/{task_id} for status."""
     task = train_forecast_task.delay()
     return {"task_id": task.id, "status": "queued"}
 

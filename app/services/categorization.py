@@ -51,8 +51,7 @@ class CategorizationService:
             key = settings.OPENAI_API_KEY
             if not key:
                 raise ValueError("OPENAI_API_KEY is not set in environment")
-            # base_url lets this drive any OpenAI-compatible endpoint
-            # (LM Studio locally, or Groq's /openai/v1 in the cloud).
+            # base_url lets this drive any OpenAI-compatible endpoint (LM Studio, Groq, etc.).
             self._openai_client = openai.OpenAI(
                 api_key=key,
                 base_url=settings.LLM_BASE_URL or None,
@@ -148,10 +147,7 @@ class CategorizationService:
         ]
 
     def categorize_batch(self, transactions: List[Dict]) -> List[Dict]:
-        """
-        transactions: list of {id, raw_text, amount, currency, is_income}
-        returns:      list of {id, category, confidence}
-        """
+        """transactions: [{id, raw_text, amount, currency, is_income}] -> [{id, category, confidence}]."""
         if not transactions:
             return []
 

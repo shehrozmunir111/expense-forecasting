@@ -1,6 +1,3 @@
-"""Celery tasks. Each opens its own DB session (no request context) and
-reuses the existing service logic so there is no duplicated business code.
-"""
 import logging
 
 from app.core.celery_app import celery_app

@@ -1,9 +1,3 @@
-"""Deterministic accessors the chat agent uses for every number.
-
-These are thin wrappers over the existing repository and forecasting service.
-The LLM never computes figures itself — it only phrases facts produced here, so
-amounts always match the REST summary/forecast endpoints exactly.
-"""
 from typing import List, Optional
 
 from app.repositories.expense_repo import ExpenseRepository

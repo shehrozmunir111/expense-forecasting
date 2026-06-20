@@ -1,13 +1,3 @@
-"""Tool-calling ReAct agent for "Chat with your finances".
-
-Unlike the Adaptive-RAG agent (which injects retrieved facts), here the LLM
-decides which deterministic finance tool to call (LangGraph's prebuilt
-``create_react_agent``). The tools wrap the existing repository/forecast
-services, so every figure the model reports is computed deterministically — the
-model only orchestrates which numbers to fetch and how to phrase them.
-
-Memory is the shared LangGraph checkpointer keyed by ``conversation_id``.
-"""
 import logging
 import uuid
 import warnings
@@ -16,9 +6,7 @@ from typing import List, Optional
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 
-# create_react_agent is the simplest prebuilt ReAct loop and is still supported in
-# langgraph 1.x (removal not until 2.0). Silence the transitional move notice
-# rather than pulling in the umbrella `langchain` package for create_agent.
+# create_react_agent: prebuilt ReAct loop, still supported in langgraph 1.x; silence the move notice.
 warnings.filterwarnings("ignore", message=".*create_react_agent has been moved.*")
 from langgraph.prebuilt import create_react_agent
 

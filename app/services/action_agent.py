@@ -1,16 +1,3 @@
-"""Human-in-the-Loop (HITL) action agent.
-
-A tool-calling agent whose tools *mutate* data (recategorize / delete an
-expense). Each write tool calls LangGraph's ``interrupt()`` BEFORE doing anything,
-so the graph pauses and the API returns the proposed action for human approval.
-On ``/chat/approve`` the graph resumes via ``Command(resume=...)`` and either
-performs the write (fresh DB session) or cancels.
-
-Because a resumed node re-runs from the top, ``interrupt()`` is the first thing
-each tool does — no side effect happens before approval. The request-scoped repo
-is passed via a ContextVar so the write executes against the *approving*
-request's session, not the (closed) original one.
-"""
 import contextvars
 import logging
 import uuid

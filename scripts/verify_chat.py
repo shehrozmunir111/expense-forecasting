@@ -1,24 +1,9 @@
 #!/usr/bin/env python3
-"""
-Live verification of the "Chat with your finances" agent.
-
-Seeds deterministic, pre-categorized data, then runs a multi-turn conversation
-through the real configured LLM + embeddings (LM Studio by default). For each
-turn it prints the agent's answer next to the figure computed by the
-deterministic services, so you can confirm at a glance that:
-
-  1. multi-turn memory works (follow-ups like "and the next month?"),
-  2. the numbers in the answers match the existing summary/forecast services.
-
-Usage (from project root, with LM Studio running on the configured base URL):
-
-    python scripts/verify_chat.py
-"""
 import os
 import sys
 from datetime import date
 
-# Load .env so LM Studio base URL / models (and optional LangSmith tracing) apply.
+# Load .env so LM Studio base URL / models apply.
 try:
     from dotenv import load_dotenv
 

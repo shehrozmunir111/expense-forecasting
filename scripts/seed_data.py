@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-Seed the database with synthetic expense data for testing.
-
-Usage (from project root):
-    python scripts/seed_data.py --months 6 --url http://localhost:8000
-
-This uploads expenses for N past months WITHOUT hitting the LLM.
-You can then call /expenses/categorize/run to trigger LLM categorization,
-or run with --categorize to do it inline.
-"""
 import argparse
 import random
 from datetime import date, timedelta

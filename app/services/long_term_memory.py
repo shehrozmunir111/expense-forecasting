@@ -1,13 +1,3 @@
-"""Long-term / semantic memory across sessions.
-
-The LangGraph checkpointer remembers a conversation *within* a process; this adds
-durable, semantic recall: salient turns are embedded into a persistent Chroma
-collection, namespaced by user, and the most relevant ones are recalled on later
-questions — surviving restarts (where the in-memory checkpointer would not).
-
-Namespacing uses the conversation/user id passed in. In production this would be
-a stable user_id; here the chat endpoint uses the conversation_id.
-"""
 import logging
 import uuid
 from typing import List, Optional

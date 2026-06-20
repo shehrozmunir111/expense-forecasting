@@ -1,4 +1,3 @@
-"""Poll the status/result of background Celery jobs."""
 from fastapi import APIRouter
 
 from app.core.celery_app import celery_app

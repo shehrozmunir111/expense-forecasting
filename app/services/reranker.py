@@ -1,15 +1,3 @@
-"""Reranking for retrieval.
-
-Vector similarity surfaces candidates; reranking reorders them by a sharper
-relevance signal and keeps the top-n. Two strategies:
-
-- **lexical** (default, deterministic, offline): a BM25-lite term-frequency score
-  with length normalization — no model, fully testable.
-- **llm** (optional): the LLM scores each candidate's relevance to the query via
-  structured output.
-
-Typical use: retrieve `RAG_FETCH_K` candidates, rerank down to `CHAT_RETRIEVAL_K`.
-"""
 import logging
 import re
 from collections import Counter

@@ -224,10 +224,7 @@ class ExpenseRepository:
         }
 
     def dataset_signature(self) -> dict:
-        """Cheap fingerprint of expense-table state for RAG index caching.
-
-        Portable across SQLite/PostgreSQL (plain aggregates).
-        """
+        """Cheap fingerprint of expense-table state for RAG index caching (portable aggregates)."""
         count = self.db.query(func.count(Expense.id)).scalar() or 0
         max_id = self.db.query(func.max(Expense.id)).scalar() or 0
         max_updated = self.db.query(func.max(Expense.updated_at)).scalar()

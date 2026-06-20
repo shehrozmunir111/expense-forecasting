@@ -31,15 +31,7 @@ def _build_retriever(tools: FinanceTools):
 
 @router.post("", response_model=ChatResponse)
 def chat(payload: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Ask plain-language questions about your own finances.
-
-    Uses Adaptive RAG (retrieve -> grade -> rewrite -> answer) over fact cards
-    built from the deterministic summary/forecast services, so every number
-    matches the REST endpoints. Pass a stable `conversation_id` to keep
-    multi-turn context (the same id is returned for convenience). Guardrails
-    validate the input and verify answer groundedness when enabled.
-    """
+    """Ask plain-language questions about your own finances via Adaptive RAG over grounded fact cards."""
     tools = FinanceTools(ExpenseRepository(db))
     cid = payload.conversation_id or uuid.uuid4().hex
 
@@ -77,10 +69,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
 
 @router.post("/stream")
 def chat_stream(payload: ChatRequest, db: Session = Depends(get_db)):
-    """Streaming variant: answer tokens as `text/plain`.
-
-    The resolved conversation id is returned in the `X-Conversation-Id` header.
-    """
+    """Streaming variant: answer tokens as `text/plain` (conversation id in `X-Conversation-Id`)."""
     tools = FinanceTools(ExpenseRepository(db))
     cid = payload.conversation_id or uuid.uuid4().hex
     generator = chat_agent.stream(payload.message, cid, tools,
@@ -94,11 +83,7 @@ def chat_stream(payload: ChatRequest, db: Session = Depends(get_db)):
 
 @router.post("/agent", response_model=ChatResponse)
 def chat_agent_endpoint(payload: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Tool-calling (ReAct) variant: the LLM decides which deterministic finance
-    tool to call, then answers. Same memory model as `/chat`. Numbers always
-    come from the tools (the existing services), never the model.
-    """
+    """Tool-calling (ReAct) variant: the LLM picks a deterministic finance tool, then answers."""
     tools = FinanceTools(ExpenseRepository(db))
     return finance_react_agent.run(payload.message, payload.conversation_id, tools)
 
@@ -118,11 +103,7 @@ def chat_agent_stream(payload: ChatRequest, db: Session = Depends(get_db)):
 
 @router.post("/auto", response_model=ChatResponse)
 def chat_auto(payload: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Auto-select the best approach for each request.
-    Routes to Adaptive RAG, ReAct Agent, or Action (HITL) automatically
-    based on the user's message. Reports the chosen route as `routed_to`.
-    """
+    """Auto-route each request to Adaptive RAG, ReAct Agent, or Action (HITL); reports `routed_to`."""
     tools = FinanceTools(ExpenseRepository(db))
     return supervisor.run(payload.message, payload.conversation_id, tools,
                           retriever=_build_retriever(tools))
@@ -130,11 +111,7 @@ def chat_auto(payload: ChatRequest, db: Session = Depends(get_db)):
 
 @router.post("/supervisor", response_model=ChatResponse)
 def chat_supervisor(payload: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Multi-agent entry point: routes the request to the right specialist
-    (question-answering vs. data-modifying) and reports `routed_to`. A request
-    routed to the action agent may return `status=pending_approval`.
-    """
+    """Multi-agent entry point: routes to the right specialist and reports `routed_to`."""
     tools = FinanceTools(ExpenseRepository(db))
     return supervisor.run(payload.message, payload.conversation_id, tools,
                           retriever=_build_retriever(tools))
@@ -142,11 +119,7 @@ def chat_supervisor(payload: ChatRequest, db: Session = Depends(get_db)):
 
 @router.post("/action", response_model=ChatResponse)
 def chat_action(payload: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Human-in-the-Loop write agent. The LLM may propose a data change
-    (recategorize/delete); the response then has `status=pending_approval` and a
-    `pending` action. Approve it via POST /chat/approve.
-    """
+    """Human-in-the-Loop write agent: proposed changes return `status=pending_approval`; approve via POST /chat/approve."""
     tools = FinanceTools(ExpenseRepository(db))
     return action_agent.run(payload.message, payload.conversation_id, tools)
 
@@ -160,11 +133,7 @@ def chat_approve(payload: ApproveRequest, db: Session = Depends(get_db)):
 
 @router.post("/reindex")
 def reindex(force: bool = True, db: Session = Depends(get_db)):
-    """(Re)build the persistent RAG index from current data.
-
-    Returns `{"status": "rebuilt"|"cached", "documents": N}`. With the default
-    fingerprint caching, an unchanged dataset returns `cached` unless `force`.
-    """
+    """(Re)build the persistent RAG index from current data (unchanged data returns `cached` unless `force`)."""
     if not settings.RAG_PERSISTENT:
         return {"status": "disabled", "detail": "RAG_PERSISTENT is false; index is ephemeral."}
     tools = FinanceTools(ExpenseRepository(db))

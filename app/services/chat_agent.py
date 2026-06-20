@@ -1,18 +1,3 @@
-"""Conversational "Chat with your finances" agent.
-
-A LangGraph implementation of Adaptive RAG over the user's own data:
-
-    retrieve -> grade -> (rewrite -> retrieve)* -> answer
-
-Key properties:
-- Numbers are never computed by the LLM. Retrieval surfaces grounded fact cards
-  built from deterministic services; the answer chain only phrases them.
-- Memory is provided by a LangGraph checkpointer keyed by ``conversation_id``
-  (MemorySaver for dev/SQLite, PostgresSaver for the PostgreSQL profile), so
-  follow-up questions keep context.
-- Graceful fallback: if the LLM/LM Studio is unreachable, the grader defaults to
-  "useful" and the answer falls back to a templated summary of the facts.
-"""
 import logging
 import uuid
 import warnings
@@ -119,11 +104,7 @@ def _recent_history(messages: List[AnyMessage], keep: int = 6) -> List[AnyMessag
 
 
 def _time_context(tools: FinanceTools):
-    """Resolve relative month terms so the LLM answers one concrete period.
-
-    Returns (hint_text, {term -> YYYY-MM}). Without this, the model can't tell
-    which of several months is "last month" and tends to list them all.
-    """
+    """Resolve relative month terms so the LLM answers one concrete period; returns (hint_text, {term -> YYYY-MM})."""
     months = tools.distinct_months()
     if not months:
         return "", {}
@@ -151,11 +132,7 @@ def _augment_query(message: str, tmap: dict) -> str:
 
 
 def _month_fact(tools: FinanceTools, message: str, tmap: dict) -> str:
-    """Guarantee the referenced month's TOTAL (deterministic) is in context.
-
-    Retrieval over per-category cards is unreliable for "how much did I spend
-    last month?" (total) questions, so we inject the monthly summary directly.
-    """
+    """Inject the referenced month's deterministic TOTAL into context (retrieval is unreliable for totals)."""
     low = (message or "").lower()
     for term, mon in tmap.items():
         if mon and term in low:
@@ -221,10 +198,7 @@ class ChatAgent:
         embeddings=None,
         extra_context: str = "",
     ):
-        """Yield answer tokens as they are generated (memory still persists).
-
-        Falls back to yielding the whole answer at once if token streaming fails.
-        """
+        """Yield answer tokens as generated; falls back to the whole answer if streaming fails."""
         cid = conversation_id or uuid.uuid4().hex
         llm = llm if llm is not None else _safe_chat_model(streaming=True)
         retriever = retriever or FinanceRetriever(tools, embeddings=embeddings)
@@ -235,15 +209,13 @@ class ChatAgent:
         streamed_any = False
         try:
             with warnings.catch_warnings():
-                # The structured grader emits a benign pydantic serialize warning
-                # when captured by stream_mode="messages"; suppress just here.
+                # Suppress the grader's benign pydantic serialize warning under stream_mode="messages".
                 warnings.simplefilter("ignore")
                 for chunk, meta in graph.stream(
                     self._initial_state(message, ec, rq), self._config(cid),
                     stream_mode="messages",
                 ):
-                    # Yield only incremental answer tokens (AIMessageChunk), not the
-                    # full AIMessage the node writes to the messages channel.
+                    # Yield only incremental answer tokens (AIMessageChunk), not the full AIMessage.
                     if (
                         meta.get("langgraph_node") == "answer"
                         and isinstance(chunk, AIMessageChunk)
@@ -329,8 +301,7 @@ class ChatAgent:
             prompt = ChatPromptTemplate.from_messages(
                 [("system", _GRADE_SYSTEM), ("human", _GRADE_HUMAN)]
             )
-            # Showcase structured output; degrade to text parsing for models
-            # that can't do tool/function calling.
+            # Structured output; degrade to text parsing for models without tool calling.
             try:
                 chain = prompt | llm.with_structured_output(_GradeDecision)
                 decision = chain.invoke({"question": state["original_question"], "context": ctx})

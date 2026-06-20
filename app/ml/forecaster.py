@@ -64,9 +64,7 @@ class ExpenseForecaster:
     # ------------------------------------------------------------------ #
 
     def train(self, monthly_data: List[Dict]) -> Dict:
-        """
-        monthly_data: [{month: "2024-01", category: "Groceries", total: 4500.0, count: 12}]
-        """
+        """monthly_data: [{month: "2024-01", category: "Groceries", total: 4500.0, count: 12}]"""
         if not monthly_data:
             return {"status": "no_data", "message": "No categorized expense data found."}
 

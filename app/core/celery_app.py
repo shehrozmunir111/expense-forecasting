@@ -1,12 +1,3 @@
-"""Celery application for expense-forecasting background jobs.
-
-Two real jobs run here (not busywork):
-  - forecast model (re)training — CPU-bound scikit-learn work, slow on big data
-  - bulk LLM categorization of pending expenses — I/O-bound, many LLM calls
-
-A nightly beat schedule retrains the model so forecasts stay fresh.
-Broker + result backend are both Redis (REDIS_URL).
-"""
 from celery import Celery
 from celery.schedules import crontab
 

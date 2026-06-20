@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""
-AI evaluation runner for the "Chat with your finances" agent.
-
-Seeds a deterministic dataset, runs each eval question through the agent, and
-scores answers with:
-  - numeric groundedness (does the answer contain the exact service figure?)
-  - retrieval recall@k (did retrieval surface the right fact?)
-  - LLM-as-judge (faithfulness / relevance / correctness) via the local model
-
-Usage (from project root, with LM Studio running):
-    python scripts/evaluate.py                # adaptive-RAG agent, with judge
-    python scripts/evaluate.py --agent        # tool-calling ReAct agent
-    python scripts/evaluate.py --no-judge     # deterministic metrics only
-    python scripts/evaluate.py --langsmith    # also upload the eval dataset to LangSmith
-"""
 import argparse
 import os
 import sys

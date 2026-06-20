@@ -1,21 +1,3 @@
-"""Production-grade RAG index for the chat feature.
-
-Upgrades the ephemeral per-request retriever to a persistent Chroma collection
-with production patterns:
-
-- **Persistence**: vectors live on disk (``RAG_PERSIST_DIR``) and survive restarts.
-- **Fingerprint caching**: a cheap dataset signature (count / max id / max
-  updated_at) is stored alongside the index; if the data hasn't changed, queries
-  reuse the existing embeddings instead of re-embedding everything.
-- **Upsert with stable ids + full rebuild on change**: documents carry stable
-  ids (no duplicates), and a data change triggers a clean rebuild so deleted
-  rows never linger.
-- **Richer corpus**: summary/forecast fact cards *plus* transaction-level docs,
-  with category/month metadata for optional filtering.
-
-Numbers still originate from the deterministic services (the docs are built from
-them); retrieval only decides which facts are relevant.
-"""
 import json
 import logging
 import os
@@ -65,11 +47,7 @@ def build_documents(tools: FinanceTools, tx_limit: int = 10000) -> Tuple[List[Do
 
 
 class RagIndex:
-    """Persistent Chroma index with fingerprint-based refresh.
-
-    ``embeddings`` is injectable for tests (offline HashingEmbeddings); in
-    production it lazily resolves to the configured provider (LM Studio nomic).
-    """
+    """Persistent Chroma index with fingerprint-based refresh (embeddings injectable for tests)."""
 
     def __init__(
         self,
@@ -163,11 +141,7 @@ class RagIndex:
 
 
 class RagIndexRetriever:
-    """Per-request adapter matching the FinanceRetriever interface.
-
-    Ensures the shared persistent index is fresh on first use, then serves
-    similarity search. ``close()`` is a no-op (the index is persistent).
-    """
+    """Per-request adapter matching the FinanceRetriever interface; ensures freshness, then serves search."""
 
     def __init__(self, index: RagIndex, tools: FinanceTools, k: Optional[int] = None):
         self.index = index

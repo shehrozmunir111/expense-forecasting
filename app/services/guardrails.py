@@ -1,15 +1,3 @@
-"""Lightweight, dependency-free guardrails for the chat feature.
-
-- **Input guard**: blocks oversized input and obvious prompt-injection attempts;
-  flags likely off-topic questions (soft flag, not a block).
-- **Output guard**: verifies *groundedness* — every amount-like number in the
-  answer must appear in the retrieved context; otherwise the answer is flagged
-  as ungrounded (a possible hallucination). Also flags leaked PII (emails).
-
-This is intentionally a small, transparent, offline-testable layer rather than a
-heavy external framework (NeMo Guardrails / guardrails-ai). Those can be swapped
-in later behind the same `check_input` / `check_output` interface.
-"""
 import re
 from dataclasses import dataclass, field
 from typing import List, Optional

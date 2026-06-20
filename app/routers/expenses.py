@@ -62,10 +62,7 @@ def upload_expenses(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    """
-    Upload one or many expense/income records.
-    Set `auto_categorize=true` to queue LLM categorization immediately.
-    """
+    """Upload one or many records; `auto_categorize=true` queues LLM categorization immediately."""
     repo = ExpenseRepository(db)
 
     expenses_data = [
@@ -86,8 +83,7 @@ def upload_expenses(
 
     cat_status = "skipped"
     if payload.auto_categorize:
-        # Prefer Celery (durable, survives request). Fall back to an in-process
-        # background task if the broker is unreachable (e.g. local dev w/o Redis).
+        # Prefer Celery (durable); fall back to in-process task if the broker is unreachable.
         try:
             categorize_pending_task.delay()
         except Exception:

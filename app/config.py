@@ -27,10 +27,7 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "./data/models"
     MIN_MONTHS_FOR_FORECAST: int = 2
 
-    # -- Conversational agent ("Chat with your finances") ----------- #
-    # Provider-agnostic. Defaults point at a local LM Studio server
-    # (OpenAI-compatible) so no cloud key is required; set CHAT_LLM_PROVIDER
-    # to "anthropic"/"gemini" and clear LLM_BASE_URL to use the cloud.
+    # Conversational agent: provider-agnostic, defaults to local LM Studio.
     CHAT_LLM_PROVIDER: str = "openai"  # "openai" (incl. LM Studio) | "anthropic" | "gemini"
     CHAT_LLM_MODEL: str = "google/gemma-4-12b-qat"
     LLM_BASE_URL: Optional[str] = None  # e.g. http://localhost:1234/v1 (LM Studio); None = cloud default
@@ -39,9 +36,7 @@ class Settings(BaseSettings):
     CHAT_LLM_TIMEOUT: int = 60  # seconds per LLM call; raise for slow local models
     GEMINI_API_KEY: Optional[str] = None
 
-    # claude_cli provider: use the local Claude Code CLI as the LLM (no API key,
-    # no cost). Works only where `claude` is installed + logged in (local machine,
-    # NOT a headless server). Set CHAT_LLM_PROVIDER=claude_cli to enable.
+    # claude_cli provider: local Claude Code CLI as LLM; local machine only, not headless servers.
     CLAUDE_CLI_COMMAND: str = "claude"
     CLAUDE_CLI_MODEL: str = "haiku"
     CLAUDE_CLI_DISABLE_THINKING: bool = True
@@ -56,8 +51,7 @@ class Settings(BaseSettings):
     CHAT_MAX_REWRITES: int = 1  # how many query-rewrite retries before answering anyway
     CHAT_RECENT_TX_LIMIT: int = 8
 
-    # Production RAG: persistent Chroma index with fingerprint-based refresh.
-    # When False, /chat uses an ephemeral per-request index instead.
+    # Production RAG: persistent Chroma index with fingerprint refresh; False = ephemeral per-request.
     RAG_PERSISTENT: bool = True
     RAG_PERSIST_DIR: str = "./data/chroma"
     RAG_COLLECTION: str = "finance_facts"
@@ -76,8 +70,7 @@ class Settings(BaseSettings):
     LTM_COLLECTION: str = "user_memory"
     LTM_RECALL_K: int = 3
 
-    # "extra: ignore" lets the shared .env hold unrelated keys
-    # (LANGSMITH_*, TAVILY_API_KEY, PINECONE_API_KEY, ...) without breaking startup.
+    # "extra: ignore" lets the shared .env hold unrelated keys without breaking startup.
     model_config = {"env_file": ".env", "case_sensitive": True, "extra": "ignore"}
 
 

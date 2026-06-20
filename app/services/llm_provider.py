@@ -1,11 +1,3 @@
-"""Provider-agnostic factories for the conversational agent.
-
-The public story is "cloud OpenAI / Anthropic / Gemini"; the actual engine is
-configurable via .env. Because LM Studio exposes an OpenAI-compatible API, the
-default `openai` provider works against a local LM Studio server simply by
-pointing ``LLM_BASE_URL`` at it. Imports are lazy so that an unused provider's
-package never has to be installed.
-"""
 import hashlib
 import logging
 import math
@@ -20,11 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_chat_model(streaming: bool = False):
-    """Return an LCEL-compatible chat model selected by ``CHAT_LLM_PROVIDER``.
-
-    Defaults to an OpenAI-compatible client, which also drives LM Studio when
-    ``LLM_BASE_URL`` is set (e.g. http://localhost:1234/v1).
-    """
+    """Return an LCEL-compatible chat model selected by ``CHAT_LLM_PROVIDER`` (OpenAI/LM Studio by default)."""
     provider = (settings.CHAT_LLM_PROVIDER or "openai").lower()
 
     if provider in ("claude_cli", "claude-cli", "claudecli"):
@@ -85,13 +73,7 @@ def get_chat_model(streaming: bool = False):
 
 
 def get_embeddings() -> Embeddings:
-    """Return an embeddings model for retrieval.
-
-    ``EMBEDDING_PROVIDER=local`` returns a dependency-free, offline embedding
-    (used by tests / no-network fallback). Otherwise an OpenAI-compatible
-    embeddings client is returned, which serves LM Studio's nomic model when
-    ``EMBEDDING_BASE_URL``/``LLM_BASE_URL`` points at it.
-    """
+    """Return an embeddings model: offline HashingEmbeddings when EMBEDDING_PROVIDER=local, else OpenAI-compatible."""
     provider = (settings.EMBEDDING_PROVIDER or "openai").lower()
 
     if provider == "local":
@@ -109,13 +91,7 @@ def get_embeddings() -> Embeddings:
 
 
 class HashingEmbeddings(Embeddings):
-    """Deterministic, dependency-free bag-of-words hashing embedding.
-
-    Offline and reproducible, so tests need no network and no model download.
-    It captures keyword overlap well enough for a tiny per-user fact-card corpus;
-    it is intentionally not a semantic model. Production uses real embeddings
-    (nomic via LM Studio, or a cloud provider).
-    """
+    """Deterministic, dependency-free bag-of-words hashing embedding for offline tests (not semantic)."""
 
     def __init__(self, dim: int = 256):
         self.dim = dim

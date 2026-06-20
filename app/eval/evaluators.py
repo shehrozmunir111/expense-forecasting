@@ -1,20 +1,3 @@
-"""AI evaluation harness for the chat feature.
-
-Three evaluator families:
-
-- **numeric_match** (deterministic): does the answer contain the exact figure the
-  services compute? This is the strongest signal — it catches hallucinated or
-  miscomputed numbers without any judge model.
-- **retrieval_hit** (deterministic): did retrieval surface a fact relevant to the
-  expected category/month? (retrieval recall@k)
-- **judge_answer** (LLM-as-judge): faithfulness / relevance / correctness scored
-  by a judge LLM with structured output (offline-capable via the local model;
-  degrades to text parsing, then to None if the judge is unavailable).
-
-``run_evaluation`` ties them together over a dataset and returns per-item rows
-plus aggregate rates. It is agnostic to which agent produced the answer — callers
-pass an ``answer_fn(question) -> {"answer", "sources"}``.
-"""
 import json
 import logging
 import os
@@ -38,10 +21,7 @@ def load_dataset(path: Optional[str] = None) -> List[dict]:
 # --------------------------------------------------------------------------- #
 
 def numeric_match(answer: str, expected_number: Optional[float]) -> Optional[bool]:
-    """True if `answer` contains `expected_number` (common formattings).
-
-    Returns None when there is no expected number to check.
-    """
+    """True if `answer` contains `expected_number`; None when there is none to check."""
     if expected_number is None:
         return None
     haystack = answer.replace(",", "")
@@ -59,11 +39,7 @@ def retrieval_hit(
     expected_category: Optional[str],
     expected_month: Optional[str],
 ) -> Optional[bool]:
-    """True if any source mentions the expected category and month (recall@k).
-
-    `sources` items may be Pydantic Source objects or dicts with label/detail.
-    Returns None when there is nothing specific to look for.
-    """
+    """True if any source mentions the expected category and month (recall@k); None when nothing to check."""
     if not expected_category and not expected_month:
         return None
     if not sources:
@@ -154,10 +130,7 @@ def run_evaluation(
     judge_llm=None,
     k_recall: Optional[int] = None,
 ) -> dict:
-    """Evaluate `answer_fn` over `dataset`. Returns {"items":[...], "aggregate":{...}}.
-
-    `answer_fn(question)` must return {"answer": str, "sources": [...]}.
-    """
+    """Evaluate `answer_fn` (returns {"answer", "sources"}) over `dataset`; returns items + aggregate."""
     items = []
     for ex in dataset:
         result = answer_fn(ex["question"])

@@ -1,10 +1,3 @@
-"""Builds a small per-request corpus of grounded "fact cards" from the
-deterministic finance tools and indexes them in an ephemeral Chroma collection.
-
-Every card's text is produced by existing services, so retrieval only decides
-*which* facts are relevant — the numbers themselves are never invented. The
-collection is rebuilt per request (always fresh) and torn down on ``close()``.
-"""
 import logging
 import uuid
 from typing import List, Optional
@@ -93,11 +86,7 @@ def build_fact_cards(tools: FinanceTools, max_months: int = 6) -> List[Document]
 
 
 class FinanceRetriever:
-    """Vector retrieval over the fact-card corpus, backed by Chroma.
-
-    ``embeddings`` is injectable so tests can pass an offline embedding without
-    hitting a network/LM Studio.
-    """
+    """Vector retrieval over the fact-card corpus, backed by Chroma (embeddings injectable for tests)."""
 
     def __init__(
         self,

@@ -1,15 +1,3 @@
-"""Multi-agent supervisor with handoff.
-
-Classifies each request and hands off to the right specialist:
-
-- **action** -> HITL ActionAgent (modify/delete data, with approval)
-- **agent**  -> ReAct FinanceAgent (complex analysis with tool calls)
-- **rag**    -> Adaptive-RAG ChatAgent (simple fact-based Q&A)
-
-Routing uses the LLM (structured output) with a deterministic keyword fallback,
-so it still routes sensibly when the model is unavailable. The chosen route is
-returned on the response as `routed_to`.
-"""
 import logging
 import re
 from typing import Optional
@@ -24,8 +12,7 @@ from app.services.finance_tools import FinanceTools
 
 logger = logging.getLogger(__name__)
 
-# Write-intent keywords for the deterministic fallback. Prefixes use \w* so
-# "recategorize"/"reclassify" match; phrase patterns need their connector word.
+# Write-intent keywords for the deterministic fallback.
 _ACTION_RE = re.compile(
     r"\b(delete|remove|recategor\w*|re-categor\w*|reclassif\w*|update|rename)\b"
     r"|\bchange\b.*\bto\b|\bset\b.*\bcategor|\bmark\b.*\bas\b|\bmove\b.*\bto\b|\bfix\b.*\bcategor",
