@@ -1,5 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Float, Numeric, Date, DateTime, Text, Boolean, Index,
+    ForeignKey,
 )
 from sqlalchemy.sql import func
 from app.database import Base
@@ -36,6 +37,8 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(Integer, primary_key=True, index=True)
+    # Owner: each expense belongs to one user (nullable for legacy rows / background jobs).
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     raw_text = Column(String(500), nullable=False)
     amount = Column(Numeric(12, 2, asdecimal=False), nullable=False)
     currency = Column(String(10), default="USD")

@@ -13,6 +13,11 @@ redis==5.0.8
 # Config & validation
 pydantic==2.7.4
 pydantic-settings==2.3.4
+email-validator==2.2.0           # pydantic EmailStr
+
+# Auth (JWT + password hashing) — mirrors the HealthPA stack
+passlib==1.7.4                   # pbkdf2_sha256 (pure-python, no native bcrypt build)
+python-jose[cryptography]==3.3.0 # JWT encode/decode
 
 # LLM providers (install both; active one selected via LLM_PROVIDER env var)
 # Bumped from 0.28.0 / 1.35.3 to versions required by the langchain-* wrappers.

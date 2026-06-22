@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
+from app.core.deps import CurrentUser
 from app.database import get_db
 from app.repositories.expense_repo import ExpenseRepository
 from app.services.forecasting import forecasting_service
@@ -17,9 +18,9 @@ router = APIRouter(prefix="/forecast", tags=["Forecast"])
 
 
 @router.get("/", response_model=ForecastResponse)
-def get_forecast(db: Session = Depends(get_db)):
+def get_forecast(current_user: CurrentUser, db: Session = Depends(get_db)):
     """Predict next month's expenses per category (auto-trains if needed; requires ~2 months of history)."""
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
     result = forecasting_service.predict(repo)
 
     if result is None:
@@ -57,9 +58,9 @@ def get_forecast(db: Session = Depends(get_db)):
 
 
 @router.post("/train", response_model=TrainResponse)
-def retrain_model(db: Session = Depends(get_db)):
-    """(Re)train the forecasting model on current categorized data."""
-    repo = ExpenseRepository(db)
+def retrain_model(current_user: CurrentUser, db: Session = Depends(get_db)):
+    """(Re)train the forecasting model on your current categorized data."""
+    repo = ExpenseRepository(db, current_user.id)
     result = forecasting_service.retrain(repo)
     return TrainResponse(**result)
 

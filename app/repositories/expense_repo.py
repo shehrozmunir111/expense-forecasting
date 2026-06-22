@@ -7,15 +7,29 @@ from app.models.expense import Expense, CategorizationStatus
 
 
 class ExpenseRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, user_id: Optional[int] = None):
         self.db = db
+        # When set, every read/write is scoped to this user. When None
+        # (background jobs), queries run unscoped across all rows.
+        self.user_id = user_id
+
+    def _scope(self, q):
+        """Filter a query to the current user when one is set."""
+        if self.user_id is not None:
+            q = q.filter(Expense.user_id == self.user_id)
+        return q
 
     # ------------------------------------------------------------------ #
     # Write                                                                #
     # ------------------------------------------------------------------ #
 
     def create_bulk(self, expenses_data: List[dict]) -> List[Expense]:
-        expenses = [Expense(**d) for d in expenses_data]
+        expenses = []
+        for d in expenses_data:
+            data = dict(d)
+            if self.user_id is not None and "user_id" not in data:
+                data["user_id"] = self.user_id
+            expenses.append(Expense(**data))
         self.db.add_all(expenses)
         self.db.commit()
         for e in expenses:
@@ -29,7 +43,7 @@ class ExpenseRepository:
         confidence: float,
         status: str = CategorizationStatus.CATEGORIZED,
     ) -> None:
-        self.db.query(Expense).filter(Expense.id == expense_id).update(
+        self._scope(self.db.query(Expense).filter(Expense.id == expense_id)).update(
             {
                 "category": category,
                 "category_confidence": confidence,
@@ -41,7 +55,7 @@ class ExpenseRepository:
     def bulk_update_categories(self, updates: List[dict]) -> None:
         """updates: list of {id, category, confidence}"""
         for u in updates:
-            self.db.query(Expense).filter(Expense.id == u["id"]).update(
+            self._scope(self.db.query(Expense).filter(Expense.id == u["id"])).update(
                 {
                     "category": u["category"],
                     "category_confidence": u["confidence"],
@@ -79,7 +93,7 @@ class ExpenseRepository:
         return date(year, month_num, 1), date(year, month_num, last_day)
 
     def get_by_id(self, expense_id: int) -> Optional[Expense]:
-        return self.db.query(Expense).filter(Expense.id == expense_id).first()
+        return self._scope(self.db.query(Expense).filter(Expense.id == expense_id)).first()
 
     def get_all(
         self,
@@ -91,7 +105,7 @@ class ExpenseRepository:
         status: Optional[str] = None,
         search: Optional[str] = None,
     ) -> List[Expense]:
-        q = self.db.query(Expense)
+        q = self._scope(self.db.query(Expense))
         q = self._apply_filters(q, category, month, is_income, status, search)
         return q.order_by(Expense.date.desc()).offset(skip).limit(limit).all()
 
@@ -103,7 +117,7 @@ class ExpenseRepository:
         status: Optional[str] = None,
         search: Optional[str] = None,
     ) -> int:
-        q = self.db.query(func.count(Expense.id))
+        q = self._scope(self.db.query(func.count(Expense.id)))
         q = self._apply_filters(q, category, month, is_income, status, search)
         return q.scalar() or 0
 
@@ -131,7 +145,7 @@ class ExpenseRepository:
 
     def get_pending_categorization(self, limit: int = 100) -> List[Expense]:
         return (
-            self.db.query(Expense)
+            self._scope(self.db.query(Expense))
             .filter(Expense.categorization_status == CategorizationStatus.PENDING)
             .limit(limit)
             .all()
@@ -144,7 +158,7 @@ class ExpenseRepository:
     def get_monthly_aggregates(self) -> List[dict]:
         """Returns per-month per-category totals for ML training."""
         rows = (
-            self.db.query(Expense.date, Expense.category, Expense.amount)
+            self._scope(self.db.query(Expense.date, Expense.category, Expense.amount))
             .filter(
                 Expense.is_income == False,
                 Expense.category.isnot(None),
@@ -168,7 +182,7 @@ class ExpenseRepository:
 
     def get_category_summary(self, month: Optional[str] = None) -> List[dict]:
         rows = (
-            self.db.query(Expense.date, Expense.category, Expense.amount)
+            self._scope(self.db.query(Expense.date, Expense.category, Expense.amount))
             .filter(
                 Expense.is_income == False,
                 Expense.category.isnot(None),
@@ -189,7 +203,9 @@ class ExpenseRepository:
         return sorted(agg.values(), key=lambda x: -x["total"])
 
     def get_monthly_summary(self, month: str) -> dict:
-        rows = self.db.query(Expense.date, Expense.category, Expense.amount, Expense.is_income).all()
+        rows = self._scope(
+            self.db.query(Expense.date, Expense.category, Expense.amount, Expense.is_income)
+        ).all()
         expenses, income = 0.0, 0.0
         cat_totals: dict = {}
         cat_counts: dict = {}
@@ -225,11 +241,12 @@ class ExpenseRepository:
 
     def dataset_signature(self) -> dict:
         """Cheap fingerprint of expense-table state for RAG index caching (portable aggregates)."""
-        count = self.db.query(func.count(Expense.id)).scalar() or 0
-        max_id = self.db.query(func.max(Expense.id)).scalar() or 0
-        max_updated = self.db.query(func.max(Expense.updated_at)).scalar()
-        max_created = self.db.query(func.max(Expense.created_at)).scalar()
+        count = self._scope(self.db.query(func.count(Expense.id))).scalar() or 0
+        max_id = self._scope(self.db.query(func.max(Expense.id))).scalar() or 0
+        max_updated = self._scope(self.db.query(func.max(Expense.updated_at))).scalar()
+        max_created = self._scope(self.db.query(func.max(Expense.created_at))).scalar()
         return {
+            "user_id": self.user_id,
             "count": int(count),
             "max_id": int(max_id),
             "max_updated": str(max_updated),
@@ -238,7 +255,7 @@ class ExpenseRepository:
 
     def get_distinct_months(self) -> List[str]:
         rows = (
-            self.db.query(Expense.date)
+            self._scope(self.db.query(Expense.date))
             .filter(Expense.is_income == False)
             .all()
         )

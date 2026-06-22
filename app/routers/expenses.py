@@ -4,6 +4,7 @@ from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 
+from app.core.deps import CurrentUser
 from app.database import get_db, SessionLocal
 from app.models.expense import CategorizationStatus
 from app.repositories.expense_repo import ExpenseRepository
@@ -60,10 +61,11 @@ def _bg_categorize():
 def upload_expenses(
     payload: ExpenseBulkUpload,
     background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
 ):
     """Upload one or many records; `auto_categorize=true` queues LLM categorization immediately."""
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
 
     expenses_data = [
         {
@@ -112,9 +114,10 @@ def list_expenses(
     is_income: Optional[bool] = None,
     status: StatusQuery = None,
     search: Optional[str] = None,
+    current_user: CurrentUser = None,
     db: Session = Depends(get_db),
 ):
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
     items = repo.get_all(skip=skip, limit=limit, category=category, month=month, is_income=is_income, status=status, search=search)
     total = repo.count(category=category, month=month, is_income=is_income, status=status, search=search)
     return PaginatedExpenses(items=items, total=total, skip=skip, limit=limit)
@@ -123,10 +126,11 @@ def list_expenses(
 @router.get("/summary/by-category", response_model=List[CategorySummary])
 def category_summary(
     month: MonthQuery = None,
+    current_user: CurrentUser = None,
     db: Session = Depends(get_db),
 ):
     """Totals per category, sorted by amount descending."""
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
     raw = repo.get_category_summary(month=month)
     total = sum(r["total"] for r in raw)
 
@@ -145,9 +149,10 @@ def category_summary(
 @router.get("/summary/monthly", response_model=MonthlySummary)
 def monthly_summary(
     month: str = Query(..., pattern=r"^\d{4}-\d{2}$", description="YYYY-MM"),
+    current_user: CurrentUser = None,
     db: Session = Depends(get_db),
 ):
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
     data = repo.get_monthly_summary(month)
 
     categories = [
@@ -175,16 +180,16 @@ def monthly_summary(
 
 
 @router.post("/categorize/run")
-def trigger_categorization(db: Session = Depends(get_db)):
-    """Synchronously categorize all pending expenses (use for small batches)."""
-    repo = ExpenseRepository(db)
+def trigger_categorization(current_user: CurrentUser, db: Session = Depends(get_db)):
+    """Synchronously categorize all of your pending expenses (use for small batches)."""
+    repo = ExpenseRepository(db, current_user.id)
     result = _categorization_service.categorize_all_pending(repo)
     return {"message": "Categorization complete", **result}
 
 
 @router.get("/{expense_id}", response_model=ExpenseOut)
-def get_expense(expense_id: int, db: Session = Depends(get_db)):
-    repo = ExpenseRepository(db)
+def get_expense(expense_id: int, current_user: CurrentUser, db: Session = Depends(get_db)):
+    repo = ExpenseRepository(db, current_user.id)
     expense = repo.get_by_id(expense_id)
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
@@ -192,9 +197,9 @@ def get_expense(expense_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{expense_id}", response_model=ExpenseOut)
-def update_expense(expense_id: int, updates: ExpenseUpdate, db: Session = Depends(get_db)):
+def update_expense(expense_id: int, updates: ExpenseUpdate, current_user: CurrentUser, db: Session = Depends(get_db)):
     """Partial update - manually set category, notes, or income flag."""
-    repo = ExpenseRepository(db)
+    repo = ExpenseRepository(db, current_user.id)
     update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
 
     if "category" in update_data:
@@ -208,7 +213,7 @@ def update_expense(expense_id: int, updates: ExpenseUpdate, db: Session = Depend
 
 
 @router.delete("/{expense_id}", status_code=204)
-def delete_expense(expense_id: int, db: Session = Depends(get_db)):
-    repo = ExpenseRepository(db)
+def delete_expense(expense_id: int, current_user: CurrentUser, db: Session = Depends(get_db)):
+    repo = ExpenseRepository(db, current_user.id)
     if not repo.delete_expense(expense_id):
         raise HTTPException(status_code=404, detail="Expense not found")

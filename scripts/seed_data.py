@@ -52,6 +52,23 @@ def generate_month(year: int, month: int):
     return transactions
 
 
+DEMO_EMAIL = "demo@financeflow.local"
+DEMO_PASSWORD = "demo12345"
+
+
+def _authenticate(client: httpx.Client) -> None:
+    """Ensure the demo user exists and attach its bearer token to the client."""
+    # Register (ignore 400 = already exists), then log in for a token.
+    client.post("/auth/register", json={
+        "email": DEMO_EMAIL, "password": DEMO_PASSWORD, "full_name": "Demo User",
+    })
+    resp = client.post("/auth/login", data={"username": DEMO_EMAIL, "password": DEMO_PASSWORD})
+    resp.raise_for_status()
+    token = resp.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    print(f"Authenticated as {DEMO_EMAIL}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--months", type=int, default=4, help="How many past months to seed")
@@ -61,6 +78,7 @@ def main():
 
     today = date.today()
     client = httpx.Client(base_url=args.url, timeout=60)
+    _authenticate(client)
 
     total_uploaded = 0
     for i in range(args.months, 0, -1):

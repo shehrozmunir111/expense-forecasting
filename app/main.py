@@ -8,7 +8,8 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import health, expenses, forecast, chat, tasks
+from app.db_migrate import ensure_user_id_column
+from app.routers import auth, health, expenses, forecast, chat, tasks
 from app.services.forecasting import forecasting_service
 
 logging.basicConfig(
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
     os.makedirs("./data", exist_ok=True)
     os.makedirs("./data/models", exist_ok=True)
     Base.metadata.create_all(bind=engine)
+    ensure_user_id_column()
     logger.info("Database tables verified/created")
     forecasting_service.load_model()
     logger.info("Forecasting model load attempted")
@@ -55,6 +57,7 @@ app.add_middleware(
 
 # -- Routers ------------------------------------------------------------ #
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(expenses.router)
 app.include_router(forecast.router)
 app.include_router(chat.router)

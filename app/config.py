@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     # Redis / Celery broker + result backend (background jobs)
     REDIS_URL: str = "redis://localhost:6379/0"
 
+    # Auth / JWT
+    SECRET_KEY: str = "change-this-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+
     # LLM Provider
     LLM_PROVIDER: str = "anthropic"  # "anthropic" | "openai"
     ANTHROPIC_API_KEY: Optional[str] = None
