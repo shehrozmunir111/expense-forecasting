@@ -5,7 +5,7 @@ import { Wallet, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { authApi } from '@/api/auth'
-import { AuthBrandPanel } from './AuthBrandPanel'
+import { AuthLayout } from './AuthLayout'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -31,15 +31,12 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <AuthBrandPanel />
-
-      <div className="flex items-center justify-center p-6">
+    <AuthLayout>
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-sm"
+          className="w-full rounded-2xl border bg-card/95 p-7 shadow-2xl backdrop-blur"
         >
           <div className="mb-6 flex items-center gap-2.5 lg:hidden">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -105,7 +102,6 @@ export function RegisterPage() {
             <Link to="/login" className="font-medium text-primary hover:underline">Sign in</Link>
           </p>
         </motion.div>
-      </div>
-    </div>
+    </AuthLayout>
   )
 }
