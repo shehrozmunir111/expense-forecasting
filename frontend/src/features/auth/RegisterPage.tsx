@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Wallet, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { authApi } from '@/api/auth'
@@ -38,15 +38,6 @@ export function RegisterPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full rounded-2xl border bg-card/95 p-7 shadow-2xl backdrop-blur"
         >
-          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Wallet className="h-5 w-5" />
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              <span className="text-primary">Finance</span>Flow
-            </span>
-          </div>
-
           <h1 className="text-2xl font-bold tracking-tight">Create account</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Start tracking your own finances — your data stays private to you.

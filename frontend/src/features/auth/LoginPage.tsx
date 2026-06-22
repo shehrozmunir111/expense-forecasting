@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Wallet, Info, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Info, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { authApi } from '@/api/auth'
@@ -45,16 +45,6 @@ export function LoginPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full rounded-2xl border bg-card/95 p-7 shadow-2xl backdrop-blur"
         >
-          {/* logo — shown on small screens where the brand panel is hidden */}
-          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Wallet className="h-5 w-5" />
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              <span className="text-primary">Finance</span>Flow
-            </span>
-          </div>
-
           {/* Demo credentials box — sits ABOVE the "Sign in" heading */}
           <div className="mb-5 overflow-hidden rounded-xl border border-primary/30 bg-primary/5">
             <div className="flex items-center gap-1.5 border-b border-primary/20 bg-primary/10 px-3.5 py-2 text-sm font-medium text-primary">
